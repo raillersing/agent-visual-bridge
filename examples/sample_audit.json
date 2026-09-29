@@ -1,0 +1,24 @@
+{
+  "title": "Django & PostgreSQL Architecture Audit",
+  "subtitle": "Security, transactions, and API performance verifications",
+  "items": [
+    {
+      "id": "sec-01",
+      "title": "Database Connection Pooling",
+      "severity": "high",
+      "description": "Ensure `CONN_MAX_AGE` is enabled in production settings to avoid high latency on TLS handshakes."
+    },
+    {
+      "id": "sec-02",
+      "title": "DRF Object-Level Permissions",
+      "severity": "critical",
+      "description": "Verify that all private endpoints check `has_object_permission` to prevent unauthorized IDOR access."
+    },
+    {
+      "id": "perf-01",
+      "title": "N+1 Query Detection",
+      "severity": "medium",
+      "description": "Use `select_related` and `prefetch_related` on Reservation foreign keys."
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "title": "ERP Refactor Implementation Plan",
+  "subtitle": "Sequential lots and atomic worktree milestones",
+  "items": [
+    {
+      "id": "lot-1",
+      "title": "Backend Models & Data Integrity",
+      "lot": "Lot 1",
+      "description": "Establish non-destructive schema migrations and atomic constraint checks."
+    },
+    {
+      "id": "lot-2",
+      "title": "DRF Serializers & Contract Sync",
+      "lot": "Lot 2",
+      "description": "Align backend response schema with commercial documents and frontend types."
+    },
+    {
+      "id": "lot-3",
+      "title": "React Frontend Studio & Visual Testing",
+      "lot": "Lot 3",
+      "description": "Interactive assistants with autosave, validation gates, and responsive UI."
+    }
+  ]
+}
