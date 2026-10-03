@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "report_type": "review",
+  "title": "Review example",
+  "items": [
+    {
+      "recommendation": "Examine the proposed approach before deciding",
+      "consequences": "Only the explicitly approved item may proceed",
+      "unknowns": [
+        "Replace these examples with project-specific evidence"
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "Illustrative example only; not a verified finding"
+        }
+      ],
+      "id": "diff",
+      "title": "Review a proposed change",
+      "file": "src/example.py",
+      "diff": "-return None\n+return result",
+      "checks": [
+        "Test the public return contract"
+      ],
+      "action": {
+        "operation": "edit",
+        "scope": "src/example.py",
+        "reversible": true
+      }
+    }
+  ]
+}

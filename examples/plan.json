@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "report_type": "plan",
+  "title": "Plan example",
+  "items": [
+    {
+      "recommendation": "Examine the proposed approach before deciding",
+      "consequences": "Only the explicitly approved item may proceed",
+      "unknowns": [
+        "Replace these examples with project-specific evidence"
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "Illustrative example only; not a verified finding"
+        }
+      ],
+      "id": "api",
+      "title": "Preserve API compatibility",
+      "lot": "Lot 1",
+      "scope": "src/api",
+      "allowed_files": [
+        "src/api/*"
+      ],
+      "forbidden_files": [
+        "migrations/*"
+      ],
+      "action": {
+        "operation": "edit",
+        "scope": "src/api",
+        "reversible": true
+      }
+    },
+    {
+      "recommendation": "Examine the proposed approach before deciding",
+      "consequences": "Only the explicitly approved item may proceed",
+      "unknowns": [
+        "Replace these examples with project-specific evidence"
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "Illustrative example only; not a verified finding"
+        }
+      ],
+      "id": "tests",
+      "title": "Verify the changed API",
+      "dependencies": [
+        "api"
+      ],
+      "scope": "tests/",
+      "action": {
+        "operation": "test",
+        "scope": "tests/",
+        "reversible": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+recursive-include docs *.md *.json
+recursive-include examples *.py *.json
+recursive-include scripts *.py
+include ui/app.ts
+include ui/test-host.ts
+include ui/package.json
+include ui/package-lock.json
+include .github/workflows/ci.yml

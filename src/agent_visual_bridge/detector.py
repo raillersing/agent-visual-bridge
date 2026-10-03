@@ -124,7 +124,7 @@ def detect_report_type(
 
 def _score_item(item: Dict[str, Any], scores: Dict[ReportType, int]) -> None:
     """Score a single sample item based on its keys."""
-    keys = {k.lower() for k in item.keys()}
+    keys = {k.lower() for k in item}
 
     # Audit item indicators
     if "severity" in keys or "severite" in keys:

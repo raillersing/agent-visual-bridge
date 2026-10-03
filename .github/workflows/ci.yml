@@ -1,36 +1,43 @@
 name: CI
-
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
-
+    branches: [main]
 jobs:
-  test:
+  core:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install ruff pytest
-        pip install -e .
-
-    - name: Lint with ruff
-      run: |
-        ruff check src/ tests/
-
-    - name: Test with pytest
-      run: |
-        pytest -v
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/ tests/
+      - run: pytest -q --ignore=tests/test_browser.py --ignore=tests/test_sdk_mcp.py
+  qualification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - run: python -m pip install -e '.[dev,qualification]'
+      - run: npm ci && npm run build && npm run build:host
+        working-directory: ui
+      - run: python -m playwright install --with-deps chromium
+      - run: pytest -q
+      - run: python -m build
+      - name: Verify installed wheel with no optional dependencies
+        run: |
+          python -m venv /tmp/avb-wheel
+          /tmp/avb-wheel/bin/pip install --no-deps dist/*.whl
+          /tmp/avb-wheel/bin/python scripts/package_smoke.py

@@ -22,13 +22,9 @@ def test_visual_bridge_save_and_read():
 
         # Now simulate user editing the HTML
         edited_content = content.replace(
-            '<textarea id="remark-task-a" class="user-textarea" placeholder="Saisissez ici vos consignes ou ajustements pour cet élément..." oninput="onInputUpdate(\'task-a\')"></textarea>',
-            '<textarea id="remark-task-a" class="user-textarea" oninput="onInputUpdate(\'task-a\')">Utiliser compose v2.</textarea>'
-        ).replace(
-            '<option value="adjust" >',
-            '<option value="adjust" selected>',
-            1
-        )
+            '<textarea id="remark-task-a" class="user-textarea"></textarea>',
+            '<textarea id="remark-task-a" class="user-textarea">Utiliser compose v2.</textarea>'
+        ).replace('<option value="request_changes" >', '<option value="request_changes" selected>', 1)
         out_file.write_text(edited_content, encoding="utf-8")
 
         # Parse back
