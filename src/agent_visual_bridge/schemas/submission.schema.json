@@ -1,0 +1,12 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema", "title":"Explicit human submission",
+ "type":"object","required":["review_id","revision","request_key","decisions"],
+ "properties":{
+  "review_id":{"type":"string"},"revision":{"type":"integer","minimum":1},"request_key":{"type":"string","minLength":1,"maxLength":200},
+  "decisions":{"type":"array","minItems":1,"items":{"type":"object","required":["id","fingerprint","decision_kind"],"properties":{
+   "id":{"type":"string"},"fingerprint":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+   "decision_kind":{"enum":["approve","request_changes","reject","defer","answer","choose"]},
+   "comment":{"type":"string"},"answer":{"type":"string"},"constraints":{"type":"array","items":{"type":"string"}},"options":{"type":"array","uniqueItems":true,"items":{"type":"string"}}
+  }}}
+ }
+}

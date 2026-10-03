@@ -7,6 +7,7 @@ human decisions, remarks, statuses, and options from saved HTML artifacts.
 from __future__ import annotations
 
 import html
+import json
 import re
 from html.parser import HTMLParser
 from pathlib import Path
@@ -63,7 +64,7 @@ class FeedbackHTMLParser(HTMLParser):
             self.current_id = attr_dict.get("id")
 
         # Track textarea
-        if tag == "textarea" and self.current_card_id:
+        if tag == "textarea" and self.current_card_id and (attr_dict.get("id") or "").startswith("remark-"):
             self._in_textarea = True
             self._textarea_buffer = []
             self.current_id = attr_dict.get("id")
@@ -86,12 +87,11 @@ class FeedbackHTMLParser(HTMLParser):
             self._in_textarea = False
             if self.current_card_id:
                 raw_text = "".join(self._textarea_buffer).strip()
-                unescaped = html.unescape(raw_text)
+                unescaped = raw_text
                 self.cards[self.current_card_id]["remark"] = unescaped
 
-        if tag in ["article", "div"] and self.current_card_id:
-            # We don't necessarily reset self.current_card_id here if nested, but close if match
-            pass
+        if tag == "article":
+            self.current_card_id = None
 
     def handle_data(self, data: str) -> None:
         if self._in_title:
@@ -102,6 +102,10 @@ class FeedbackHTMLParser(HTMLParser):
 
 def parse_html_report(html_content: str) -> Dict[str, Any]:
     """Parse HTML string and extract decisions, remarks, and statistics."""
+    embedded = extract_json_script(html_content, "avb-feedback")
+    if isinstance(embedded, dict):
+        embedded["provenance"] = "imported-artifact-unverified"
+        return embedded
     # 1. First pass with standard HTMLParser
     parser = FeedbackHTMLParser()
     parser.feed(html_content)
@@ -109,7 +113,7 @@ def parse_html_report(html_content: str) -> Dict[str, Any]:
     cards_list = list(parser.cards.values())
 
     # 2. Fallback regex pass for any textareas/selects outside article tags or custom layouts
-    if not cards_list or all(not c["remark"] and c["status"] == "pending" for c in cards_list):
+    if not cards_list:
         cards_list = _fallback_regex_parse(html_content)
 
     # Classify decisions
@@ -119,10 +123,9 @@ def parse_html_report(html_content: str) -> Dict[str, Any]:
 
     for c in cards_list:
         status = (c.get("status") or "pending").lower()
-        remark = (c.get("remark") or "").strip()
-        if status in ["validate", "validé", "ok"]:
+        if status in ["validate", "validé", "ok", "approve"]:
             validated.append(c)
-        elif status in ["adjust", "ajuster", "modify"] or remark:
+        elif status in ["adjust", "ajuster", "modify", "request_changes"]:
             adjusted.append(c)
         else:
             pending.append(c)
@@ -143,6 +146,8 @@ def parse_html_report(html_content: str) -> Dict[str, Any]:
         "adjusted": adjusted,
         "pending": pending,
         "mandate_markdown": mandate_markdown,
+        "provenance": "legacy-html-unverified",
+        "submitted_at": None,
     }
 
 
@@ -216,7 +221,7 @@ def _generate_mandate_markdown(
         "",
         "## Bilan Global :",
         f"- ✅ **Validés sans modification :** {len(validated)}",
-        f"- ✏️ **Validés avec ajustements :** {len(adjusted)}",
+        f"- ✏️ **Révision demandée, sans autorisation :** {len(adjusted)}",
         f"- ⏳ **En attente :** {len(pending)}",
         "",
     ]
@@ -239,6 +244,42 @@ def _generate_mandate_markdown(
             title = item.get("title") or item["id"]
             opt_str = f" ({', '.join(item['options'])})" if item.get("options") else ""
             lines.append(f"- **[`{item['id']}`]** {title}{opt_str}")
+            if item.get("remark"):
+                lines.extend(f"> {line}" for line in item["remark"].splitlines())
         lines.append("")
 
+    if pending:
+        lines.append("## En attente, sans autorisation")
+        for item in pending:
+            lines.append(f"- [{item['id']}] {item.get('title', '')}")
+            if item.get("remark"):
+                lines.extend(f"> {line}" for line in item["remark"].splitlines())
     return "\n".join(lines)
+
+
+class _EmbeddedParser(HTMLParser):
+    def __init__(self, target):
+        super().__init__()
+        self.target, self.active, self.parts = target, False, []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script" and dict(attrs).get("id") == self.target:
+            self.active = True
+
+    def handle_endtag(self, tag):
+        if tag == "script":
+            self.active = False
+
+    def handle_data(self, data):
+        if self.active:
+            self.parts.append(data)
+
+
+def extract_json_script(content, target):
+    parser = _EmbeddedParser(target)
+    parser.feed(content)
+    return json.loads("".join(parser.parts)) if parser.parts else None
+
+
+def extract_proposal(content):
+    return extract_json_script(content, "avb-proposal")

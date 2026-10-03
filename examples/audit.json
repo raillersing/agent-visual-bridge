@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "report_type": "audit",
+  "title": "Audit example",
+  "items": [
+    {
+      "recommendation": "Examine the proposed approach before deciding",
+      "consequences": "Only the explicitly approved item may proceed",
+      "unknowns": [
+        "Replace these examples with project-specific evidence"
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "Illustrative example only; not a verified finding"
+        }
+      ],
+      "id": "permission",
+      "title": "Object-level permission check",
+      "severity": "high",
+      "verdict": "Unverified",
+      "description": "Verify tenant isolation before changing permissions",
+      "action": {
+        "operation": "edit",
+        "scope": "src/permissions.py",
+        "reversible": true
+      }
+    }
+  ]
+}

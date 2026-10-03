@@ -1,0 +1,29 @@
+{
+  "review_id": "98af8f5313df4f579617f94ff0113d26",
+  "receipt_id": "1a988b6d445f44b5b0b7106dff9deb69",
+  "result": {
+    "state": "succeeded",
+    "id": "synthesis",
+    "evidence": [
+      {
+        "kind": "tool_result",
+        "source": "codex exec (read-only)",
+        "content": "AVB_CONSTRAINTS_PRESERVED\n\n- No database migration\n- Only synthesize a response\n- Read-only synthesis; preserve legacy API compatibility",
+        "usage": {
+          "input_tokens": 37448,
+          "cached_input_tokens": 29312,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 165,
+          "reasoning_output_tokens": 0
+        },
+        "tool_calls": [
+          {
+            "tool": "visual_bridge_get_receipt",
+            "status": "completed",
+            "error": null
+          }
+        ]
+      }
+    ]
+  }
+}

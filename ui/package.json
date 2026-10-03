@@ -1,0 +1,12 @@
+{
+  "name": "agent-visual-bridge-ui",
+  "private": true,
+  "scripts": {
+    "build": "esbuild app.ts --bundle --minify --legal-comments=eof --format=iife --target=es2020 --outfile=../src/agent_visual_bridge/assets/mcp-app.js",
+    "build:host": "esbuild test-host.ts --bundle --minify --format=iife --target=es2020 --outfile=out/test-host.js"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "esbuild": "0.28.2"
+  }
+}

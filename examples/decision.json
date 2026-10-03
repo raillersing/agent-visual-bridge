@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "report_type": "decision",
+  "title": "Decision example",
+  "items": [
+    {
+      "recommendation": "Examine the proposed approach before deciding",
+      "consequences": "Only the explicitly approved item may proceed",
+      "unknowns": [
+        "Replace these examples with project-specific evidence"
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "Illustrative example only; not a verified finding"
+        }
+      ],
+      "id": "storage",
+      "title": "Select local storage",
+      "interaction_kind": "clarify",
+      "question": "Which persistence approach fits the constraints?",
+      "options": [
+        {
+          "id": "sqlite",
+          "label": "SQLite",
+          "description": "Durable transactions without a server"
+        },
+        {
+          "id": "files",
+          "label": "JSON files",
+          "description": "Easy inspection; concurrency needs care"
+        }
+      ],
+      "tradeoffs": [
+        "Concurrent submissions",
+        "Dependency footprint"
+      ]
+    }
+  ]
+}

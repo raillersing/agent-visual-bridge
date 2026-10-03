@@ -1,3 +1,6 @@
+import os
+import subprocess
+import sys
 import json
 import tempfile
 from pathlib import Path
@@ -35,3 +38,31 @@ def test_cli_auto_and_read():
         # Read back
         exit_code_read = main(["read", str(output_html)])
         assert exit_code_read == 0
+
+
+def test_cli_lifecycle_and_explicit_import(tmp_path):
+    database = tmp_path / 'reviews.db'
+    proposal = tmp_path / 'proposal.json'
+    proposal.write_text(json.dumps({'items': [{'id': 'a', 'title': 'Confirm scope'}]}))
+
+    def cli(*args, expected=0):
+        result = subprocess.run([sys.executable, '-m', 'agent_visual_bridge', '--db', str(database), *args],
+                                capture_output=True, text=True, env=os.environ.copy(), timeout=15)
+        assert result.returncode == expected, result.stderr
+        return json.loads(result.stdout) if expected == 0 else result
+
+    review = cli('create', str(proposal), '-o', str(tmp_path / 'nested/review.html'))
+    assert cli('get', review['review_id'])['state'] == 'awaiting_input'
+    export = tmp_path / 'decisions.json'
+    export.write_text(json.dumps({'review_id': review['review_id'], 'revision': 1, 'request_key': 'import-once',
+                     'submitted_at': '2026-10-02T00:00:00Z', 'decisions': [{'id': 'a',
+                     'fingerprint': review['items'][0]['authorization_fingerprint'], 'decision_kind': 'approve',
+                     'comment': 'Preserve public API', 'constraints': ['No database migration']}]}))
+    receipt = cli('submit', review['review_id'], str(export))
+    assert cli('submit', review['review_id'], str(export)) == receipt
+    assert cli('receipt', receipt['receipt_id']) == receipt
+    assert receipt['decisions'][0]['constraints'] == ['No database migration']
+    assert receipt['provenance'] == 'imported-artifact-unverified'
+    export.write_text(json.dumps({'review_id': review['review_id'], 'decisions': []}))
+    rejected = cli('submit', review['review_id'], str(export), expected=1)
+    assert 'Explicit submission' in rejected.stderr

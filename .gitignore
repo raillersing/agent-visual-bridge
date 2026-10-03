@@ -37,3 +37,9 @@ reports/
 scratch/
 feedback.json
 mandate.json
+node_modules/
+ui/out/
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
