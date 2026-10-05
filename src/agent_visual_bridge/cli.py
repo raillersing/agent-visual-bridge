@@ -60,7 +60,10 @@ def main(argv=None):
     doctor.add_argument('--server-name', default='visual-bridge')
     doctor.add_argument('--handshake', action='store_true', help='Probe the server with the official SDK, not the commercial client')
     mcp = commands.add_parser('mcp', help='Run the optional official MCP server')
-    mcp.add_argument('--transport', choices=['stdio'], default='stdio')
+    mcp.add_argument('--transport', choices=['stdio', 'streamable-http'], default='stdio')
+    mcp.add_argument('--host', default='127.0.0.1')
+    mcp.add_argument('--port', type=int, default=8766)
+    mcp.add_argument('--token-file', type=Path)
     opened = commands.add_parser('open', help='Open a detached browser session and return JSON promptly')
     opened.add_argument('review_id')
     opened.add_argument('--lease-seconds', type=float, default=3600)
@@ -138,7 +141,7 @@ def main(argv=None):
             return 0
         if args.command == 'mcp':
             from .mcp.server import run_mcp_server
-            run_mcp_server(args.db)
+            run_mcp_server(args.db, args.transport, args.host, args.port, args.token_file)
             return 0
         if args.command in {'open', 'browser-stop'}:
             from .browser import open_browser_session, stop_browser_sessions
