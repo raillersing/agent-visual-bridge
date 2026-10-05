@@ -1,6 +1,6 @@
 # Agent Visual Bridge
 
-A local interface for reviewing agent proposals, asking questions and returning durable human decisions. Version 0.3.0.dev1 adds client-specific setup and browser sessions that survive MCP disconnection. External client qualification is tracked separately.
+A local interface for reviewing agent proposals, asking questions and returning durable human decisions. Version 0.3.0.dev2 adds client-specific setup, durable browser sessions, session-bound cooperative execution and authenticated local MCP Streamable HTTP. External client qualification is tracked separately.
 
 The Python core uses only the standard library (Python 3.9+). Reports embed their CSS and JavaScript and work offline. SQLite stores reviews locally. Optional agent integrations can send the authorized task to their configured provider; the bridge does not store provider credentials.
 
@@ -136,3 +136,5 @@ The locked Node dependencies are used to build the native App; Node is unnecessa
 - [Release notes](docs/RELEASE_NOTES.md)
 
 MIT license. No package publication has been performed as part of this implementation.
+
+See [portable execution](docs/EXECUTION.md), [local MCP HTTP](docs/MCP_HTTP.md) and [current qualification](docs/QUALIFICATION.md). Two non-Codex runtime journeys and a human pilot remain pending.

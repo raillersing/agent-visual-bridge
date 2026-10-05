@@ -1,5 +1,25 @@
 # Qualification
 
+## 0.3.0.dev2 — 2026-10-05, implementation qualified; external gate PARTIAL
+
+| Layer | Observed result |
+|---|---|
+| ERP-installed package, implementation `6455d5a`, complete suite | **102 passed**, no skips, 130.83 seconds; separate temporary databases |
+| Latest request metadata `4e480a8`, subprocess/session/lifecycle tests | **33 passed**, 2.00 seconds; installed ERP package + real HTTP **36 passed**, 10.99 seconds |
+| Real MCP Streamable HTTP client and sockets | **3 passed**; authentication, Host/Origin, sessions, reconnect and durable receipts |
+| Python 3.9 minimal core at HTTP implementation | **69 passed, 4 optional skips** |
+| ERP migration and preservation | Existing SQLite counts 1 review / 0 receipts / 1 revision / 1 event unchanged; immutable hashes preserved; 137 pre-existing files unchanged |
+| Installed minimal wheel, Python 3.9, Codex absent from PATH | HTML, persistence, receipt, assets, schemas, setup and detached browser passed; no optional dependencies |
+| Backup restoration | Disposable SQLite restoration passed integrity check and immutable comparisons; active database preserved |
+| Hermes 0.18.2 real agent/inference | Failed before a successful MCP read; configured local provider endpoint unreachable |
+| OpenCode 1.18.34 real CLI/inference | Configured Ollama Cloud returned APIError Unauthorized; no successful MCP read |
+| Commercial Apps / human pilot | **Not qualified / 0 participants**; checklist and observation protocol prepared |
+| ACP | Boundary study only; no runtime adapter |
+
+[Sanitized current evidence](evidence/qualification-20261005.json) records implementation revisions, failure categories and synthetic technical scope. The final preservation reread confirmed the same database; one pre-existing ERP report changed concurrently after the initial 137-file check and was left untouched. Credentials and raw provider logs are excluded. The successful JSON subprocess worker is a real second execution engine; it is not a qualified second LLM product. Provider authentication remains managed by the chosen clients.
+
+The milestone stays **PARTIAL** until two non-Codex clients finish the [external journey](CLIENT_PILOT_CHECKLIST.md). Stable package publication is not claimed. Older evidence below is retained as historical snapshots.
+
 ## 0.3.0.dev1 — 2026-10-03, local implementation, external qualification PARTIAL
 
 Delivered locally: detached browser supervisor, nonblocking MCP workflow, form-mode capability checks, explicit fallback, nine client configuration exporters, JSONC preservation, optional TOML editing, CLI diagnostics and neutral instructions. The Codex executor is isolated with compatible imports. HTTP transport and a second execution engine are not delivered.

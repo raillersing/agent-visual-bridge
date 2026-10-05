@@ -59,7 +59,11 @@ Le SDK Python `ReviewService` fournit le même contrat. Sans navigateur accessib
 
 ## Limites actuelles
 
-- MCP stdio seulement. HTTP et deuxième moteur d’exécution restent au jalon suivant.
+- MCP stdio par défaut; [HTTP local authentifié](MCP_HTTP.md) et [moteur JSON portable](EXECUTION.md) disponibles. Les interfaces HTTP des clients commerciaux restent à qualifier.
 - SSH, WSL et conteneurs demandent un transfert de port explicite; aucun tunnel automatique n’est créé.
 - Exporter une configuration ne qualifie ni le modèle ni toutes les interfaces natives.
-- L’installation ERP existante est préservée; sa migration attend les qualifications supplémentaires. Aucune donnée métier ERP n’a été modifiée dans cette étape.
+- ERP Hospitality est migré vers `0.3.0.dev2`, avec conservation de sa base et de son travail métier. Les essais automatisés utilisent des bases séparées; le pilote humain et deux agents non Codex restent à qualifier.
+
+## Installation existante
+
+`setup` et `doctor` acceptent `--server-name NOM` pour conserver une ancienne entrée MCP. La fusion préserve ses permissions ciblées et les réglages étrangers; elle ne crée pas une deuxième entrée sous un autre nom. Sauvegarder SQLite avant mise à jour, conserver `AVB_DB` et vérifier la restauration sur une copie jetable.

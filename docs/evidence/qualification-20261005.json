@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-05",
+  "bridge_version": "0.3.0.dev2",
+  "implementation_revision": "4e480a8917abaab378b7a34bf5477b2ef24f9ced",
+  "human_participants": 0,
+  "commercial_apps_qualified": false,
+  "non_codex_runtime_gate": "BLOCKED",
+  "scope": "Isolated scratch database; synthetic decisions; no provider credential/configuration change; read-only MCP tools",
+  "clients": [
+    {
+      "client": "OpenCode",
+      "version": "1.18.34",
+      "provider": "Ollama Cloud",
+      "status": "not-qualified",
+      "observed_error": "APIError Unauthorized",
+      "successful_mcp_reads": 0,
+      "elapsed_seconds": 18.51
+    },
+    {
+      "client": "Hermes",
+      "version": "0.18.2",
+      "provider": "configured ollama-launch via local endpoint",
+      "status": "not-qualified",
+      "observed_error": "inference failed; local endpoint 127.0.0.1:11434 unreachable",
+      "successful_mcp_reads": 0,
+      "elapsed_seconds": 32.51
+    }
+  ],
+  "erp_migration": {
+    "original_version": "0.2.0",
+    "initial_installed_version": "0.3.0.dev2",
+    "initial_revision": "54a9bd60ab70439a1828f13c49df46d30af9720f",
+    "initial_tests_passed": 53,
+    "original_reviews": 1,
+    "original_receipts": 0,
+    "original_revisions": 1,
+    "original_events": 1,
+    "preexisting_files_checked": 137,
+    "production_data_preserved": true,
+    "other_work_preserved": true,
+    "database_backup_created": true,
+    "full_suite_revision": "6455d5ad30f59f970323a10387ab3ded43299ec0",
+    "full_suite_passed": 102,
+    "full_suite_seconds": 130.83,
+    "backup_restoration_verified": true,
+    "installed_revision": "4e480a8917abaab378b7a34bf5477b2ef24f9ced",
+    "latest_targeted_tests_passed": 36,
+    "latest_targeted_seconds": 10.99,
+    "latest_other_file_changes": [
+      "reports/CAHIER_DE_RECETTE_ET_REMARQUES.md"
+    ],
+    "latest_other_file_change_scope": "Concurrent change observed after initial preservation checks; never edited or reverted by this task"
+  },
+  "tests": {
+    "portable_execution_and_sessions": {
+      "passed": 33,
+      "revision": "4e480a8917abaab378b7a34bf5477b2ef24f9ced"
+    },
+    "real_mcp_http_socket_tests": {
+      "passed": 3
+    },
+    "python39_minimal_core": {
+      "passed": 69,
+      "skipped": 4
+    },
+    "minimal_installed_wheel": {
+      "python": "3.9.25",
+      "optional_dependencies": false,
+      "codex_on_path": false,
+      "status": "passed",
+      "checks": [
+        "HTML",
+        "SQLite persistence",
+        "receipt",
+        "assets",
+        "schemas",
+        "setup",
+        "detached browser"
+      ]
+    }
+  },
+  "not_claimed": [
+    "Two non-Codex runtime journeys",
+    "Human usability results",
+    "Commercial MCP Apps support",
+    "ACP runtime support",
+    "Stable package publication"
+  ]
+}
