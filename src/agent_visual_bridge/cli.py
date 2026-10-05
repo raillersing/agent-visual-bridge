@@ -47,6 +47,23 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog='agent-bridge')
     parser.add_argument('--db', help='SQLite review database (or AVB_DB)')
     commands = parser.add_subparsers(dest='command')
+    from .installation import CLIENTS
+    setup = commands.add_parser('setup', help='Export or install project-scoped MCP configuration')
+    setup.add_argument('--project', required=True)
+    setup.add_argument('--client', choices=CLIENTS, required=True)
+    setup.add_argument('--dry-run', action='store_true')
+    setup.add_argument('--output', help='Export to a specific file instead of the client configuration')
+    doctor = commands.add_parser('doctor', help='Inspect configuration; never infer provider availability')
+    doctor.add_argument('--project', required=True)
+    doctor.add_argument('--client', choices=CLIENTS, required=True)
+    doctor.add_argument('--handshake', action='store_true', help='Probe the server with the official SDK, not the commercial client')
+    mcp = commands.add_parser('mcp', help='Run the optional official MCP server')
+    mcp.add_argument('--transport', choices=['stdio'], default='stdio')
+    opened = commands.add_parser('open', help='Open a detached browser session and return JSON promptly')
+    opened.add_argument('review_id')
+    opened.add_argument('--lease-seconds', type=float, default=3600)
+    opened.add_argument('--open-browser', action='store_true')
+    commands.add_parser('browser-stop', help='Close detached browser access for this database, preserving reviews')
     auto = commands.add_parser('auto', help='Generate report and optionally wait for decisions')
     auto.add_argument('input')
     auto.add_argument('-o', '--output')
@@ -111,10 +128,31 @@ def main(argv=None):
         parser.print_help()
         return 0
     try:
+        if args.command in {'setup', 'doctor'}:
+            from .installation import setup, doctor
+            result = (setup(args.project, args.client, dry_run=args.dry_run, output=args.output)
+                      if args.command == 'setup' else doctor(args.project, args.client, handshake=args.handshake))
+            _handle_feedback_output(result)
+            return 0
+        if args.command == 'mcp':
+            from .mcp.server import run_mcp_server
+            run_mcp_server(args.db)
+            return 0
+        if args.command in {'open', 'browser-stop'}:
+            from .browser import open_browser_session, stop_browser_sessions
+            database = ReviewService(args.db).store.path
+            if args.command == 'browser-stop':
+                result = stop_browser_sessions(database)
+            else:
+                result = open_browser_session(database, args.review_id, lease_seconds=args.lease_seconds)
+                if args.open_browser:
+                    webbrowser.open(result['url'])
+            _handle_feedback_output(result)
+            return 0
         if args.command == 'init':
             out = Path(args.output or f'sample_{args.type}.json')
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps(starter(args.type), indent=2, ensure_ascii=False))
+            out.write_text(json.dumps(starter(args.type), indent=2, ensure_ascii=False), encoding='utf-8')
             return 0
         if args.command == 'auto':
             bridge = VisualBridge.from_json_file(args.input, report_type=args.type)
@@ -146,7 +184,7 @@ def main(argv=None):
         service = ReviewService(args.db)
         command = args.command
         if command == 'create':
-            result = service.create_review(json.loads(Path(args.input).read_text()))
+            result = service.create_review(json.loads(Path(args.input).read_text(encoding='utf-8')))
             if args.output:
                 output = Path(args.output)
                 output.parent.mkdir(parents=True, exist_ok=True)
@@ -168,7 +206,7 @@ def main(argv=None):
             result = pilot_report(service, args.review_id)
         elif command == 'pilot-record':
             from .evaluation import record_observation
-            result = record_observation(service, args.review_id, json.loads(Path(args.input).read_text()))
+            result = record_observation(service, args.review_id, json.loads(Path(args.input).read_text(encoding='utf-8')))
         elif command == 'submit':
             data = read_decision_file(args.input)
             if data.get('review_id') != args.review_id or not data.get('submitted_at'):
@@ -176,13 +214,13 @@ def main(argv=None):
             result = service.submit_decisions(args.review_id, data.get('revision'), data.get('decisions'),
                                               data.get('request_key', ''), provenance='imported-artifact-unverified')
         elif command == 'revise':
-            result = service.revise_review(args.review_id, json.loads(Path(args.input).read_text()), args.revision)
+            result = service.revise_review(args.review_id, json.loads(Path(args.input).read_text(encoding='utf-8')), args.revision)
         elif command == 'question':
             result = service.ask_item_question(args.review_id, args.item_id, args.message)
         elif command == 'control':
             result = service.request_control(args.review_id, args.action, json.loads(args.payload))
         elif command == 'settings':
-            result = service.settings(args.project_id, json.loads(Path(args.input).read_text()) if args.input else None)
+            result = service.settings(args.project_id, json.loads(Path(args.input).read_text(encoding='utf-8')) if args.input else None)
         elif command == 'resume':
             with LocalServer(service, args.review_id, args.port) as server:
                 print(json.dumps({'url': server.url, 'review_id': args.review_id}), flush=True)
@@ -198,7 +236,7 @@ def main(argv=None):
     except TimeoutError as exc:
         print(str(exc), file=sys.stderr)
         return 2
-    except (ValueError, OSError, KeyError, TypeError) as exc:
+    except (ValueError, OSError, KeyError, TypeError, RuntimeError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 

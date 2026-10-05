@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from pathlib import Path
 from uuid import uuid4
 from typing import Any
@@ -16,7 +17,7 @@ from ..models import ValidationError
 from ..parser import parse_html_file
 from ..sessions import ReviewService
 from ..templates import render_review, render_app_resource
-from ..api import LocalServer
+from ..browser import open_browser_session
 
 UI_URI = 'ui://agent-visual-bridge/review.html'
 
@@ -26,12 +27,16 @@ class HumanAnswer(BaseModel):
 
 
 def create_server(database=None):
+    from .. import __version__
     service = ReviewService(database)
     mcp = FastMCP('agent-visual-bridge')
+    mcp._mcp_server.version = __version__
 
     @mcp.tool()
     def visual_bridge_create_review(proposal: dict) -> dict[str, Any]:
         """Create a durable review; information/clarification/authorization stay distinct."""
+        proposal = dict(proposal)
+        proposal.setdefault('project_id', os.environ.get('AVB_PROJECT_ID', 'default'))
         return service.create_review(proposal)
 
     @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True))
@@ -84,31 +89,42 @@ def create_server(database=None):
     @mcp.tool()
     async def visual_bridge_ask_human(title: str, items: list[dict], ctx: Context,
                                       type: str = 'auto', output_path: str = 'reports/human-review.html',
-                                      timeout: float = 600) -> dict[str, Any]:
-        """Open a local review and await explicit human submission; timeout is an error."""
+                                      timeout: float = 600, wait: bool = False,
+                                      open_browser: bool = False) -> dict[str, Any]:
+        """Return a durable browser review promptly; wait=True explicitly awaits a receipt.
+
+        URL is on the server's loopback. Remote users need an explicitly configured
+        port mapping or CLI export. Timeout/disconnection never closes the review.
+        """
         import math
         import webbrowser
         if not math.isfinite(timeout) or not 0 < timeout <= 86400:
             raise ValidationError('timeout must be between 0 and 86400 seconds')
-        review = service.create_review({'title': title, 'items': items, 'report_type': type})
+        review = service.create_review({'title': title, 'items': items, 'report_type': type,
+                                        'project_id': os.environ.get('AVB_PROJECT_ID', 'default')})
         out = Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(render_review(review), encoding='utf-8')
         if review['state'] == 'published':
-            await asyncio.to_thread(webbrowser.open, out.resolve().as_uri())
+            if open_browser:
+                await asyncio.to_thread(webbrowser.open, out.resolve().as_uri())
             return {'state': 'published', 'review': review}
-        local = LocalServer(service, review['review_id']).start()
-        try:
-            await asyncio.to_thread(webbrowser.open, local.url)
-            deadline = asyncio.get_running_loop().time() + timeout
-            while not local.submitted.is_set():
-                if asyncio.get_running_loop().time() >= deadline:
-                    service.close_review(review['review_id'], 'expired')
-                    raise TimeoutError('No explicit human submission')
-                await asyncio.sleep(.1)
-            return local.receipt
-        finally:
-            await asyncio.to_thread(local.close)
+        browser = await asyncio.to_thread(open_browser_session, service.store.path, review['review_id'],
+                                         lease_seconds=max(3600, timeout))
+        if open_browser:
+            await asyncio.to_thread(webbrowser.open, browser['url'])
+        if not wait:
+            return {**browser, 'review': review, 'authorized': False,
+                    'next_tool': 'visual_bridge_get_review'}
+        deadline = asyncio.get_running_loop().time() + timeout
+        while asyncio.get_running_loop().time() < deadline:
+            current = await asyncio.to_thread(service.get_review, review['review_id'])
+            if current['receipts']:
+                return service.get_receipt(current['receipts'][-1])
+            if current['state'] in {'cancelled', 'expired', 'superseded'}:
+                return {'state': current['state'], 'review_id': review['review_id'], 'authorized': False}
+            await asyncio.sleep(.1)
+        raise TimeoutError('No explicit submission; review remains available via visual_bridge_open_review')
 
     @mcp.tool()
     async def visual_bridge_ask_question(review_id: str, item_id: str, ctx: Context) -> dict[str, Any]:
@@ -118,10 +134,16 @@ def create_server(database=None):
         if not item or item['interaction_kind'] != 'clarify':
             raise ValidationError('Elicitation is limited to clarification items')
         capabilities = ctx.request_context.session.client_params.capabilities
-        if capabilities.elicitation is None:
-            return {'state': 'awaiting_input', 'question': item['question'], 'fallback': 'local-html',
-                    'review_id': review_id}
-        result = await ctx.elicit(item['question'], HumanAnswer)
+        async def fallback(reason):
+            browser = await asyncio.to_thread(open_browser_session, service.store.path, review_id)
+            return {**browser, 'state': review['state'], 'question': item['question'],
+                    'fallback': 'local-html', 'reason': reason, 'authorized': False}
+        if not supports_form_elicitation(capabilities):
+            return await fallback('form-elicitation-unavailable')
+        try:
+            result = await ctx.elicit(item['question'], HumanAnswer)
+        except Exception:
+            return await fallback('form-elicitation-failed')
         if result.action != 'accept':
             return {'state': result.action, 'review_id': review_id, 'authorized': False}
         return service.submit_decisions(review_id, review['revision'], [{
@@ -134,11 +156,14 @@ def create_server(database=None):
         return render_app_resource()
 
     @mcp.tool(meta={'ui': {'resourceUri': UI_URI}})
-    def visual_bridge_open_review(review_id: str) -> CallToolResult:
+    async def visual_bridge_open_review(review_id: str, ctx: Context, prefer_browser: bool = False) -> CallToolResult:
         """Display an interactive review in MCP Apps hosts, with a structured/textual fallback."""
         review = service.get_review(review_id)
-        return CallToolResult(content=[TextContent(type='text', text=json.dumps(review, ensure_ascii=False))],
-                              structuredContent={'review': review},
+        data = {'review': review}
+        if prefer_browser or not supports_apps(ctx.request_context.session.client_params.capabilities):
+            data['browser'] = await asyncio.to_thread(open_browser_session, service.store.path, review_id)
+        return CallToolResult(content=[TextContent(type='text', text=json.dumps(data, ensure_ascii=False))],
+                              structuredContent=data,
                               _meta={'review_html': render_review(review, {'app': True}, service.settings(review['project_id']))})
 
     @mcp.tool(meta={'ui': {'visibility': ['app']}})
@@ -195,3 +220,13 @@ def create_server(database=None):
 def supports_apps(capabilities):
     extensions = getattr(capabilities, 'extensions', {}) or {}
     return 'io.modelcontextprotocol/ui' in extensions
+
+
+def supports_form_elicitation(capabilities):
+    elicitation = getattr(capabilities, 'elicitation', None)
+    if elicitation is None:
+        return False
+    # Empty capability is the historical form-only declaration.
+    if isinstance(elicitation, dict):
+        return elicitation.get('form') is not None or not elicitation
+    return elicitation.form is not None or not elicitation.model_dump(exclude_none=True)

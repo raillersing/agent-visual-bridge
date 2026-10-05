@@ -1,4 +1,16 @@
-# 0.2.0 — Implementation prepared, not published
+# 0.3.0.dev1 — Local development, not published
+
+- Project-specific MCP exporters, preview, backups, JSONC preservation and optional lossless TOML editing.
+- `setup`, `doctor`, `mcp`, detached `open` and `browser-stop` CLI commands.
+- Browser supervisor independent of MCP connection, bounded leases and no implicit review expiration.
+- Form-mode negotiation and browser fallback for missing/refused elicitation; URL-only clients do not receive forms.
+- Nonblocking MCP `ask_human` by default, explicit blocking/browser flags; see [migration](MIGRATION.md).
+- Codex executor moved to an optional engine module with compatible imports.
+- English browser lifecycle messages and common agent instructions.
+
+Real client qualification remains partial: Claude authentication unavailable, Gemini authentication refused, Hermes discovery tested. HTTP, second execution engine, commercial Apps and ERP migration remain planned.
+
+# 0.2.0 — Implementation delivered, package not published
 
 - Versioned proposals, distinct information/question/authorization modes, exact decisions and immutable idempotent receipts.
 - Durable SQLite reviews, revision history, item conversations and selectively invalidated authorizations.

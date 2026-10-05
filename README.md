@@ -1,6 +1,6 @@
 # Agent Visual Bridge
 
-A local interface for reviewing agent proposals, asking questions and returning durable human decisions. Version 0.2 adds versioned reviews, immutable receipts and cooperative execution controls.
+A local interface for reviewing agent proposals, asking questions and returning durable human decisions. Version 0.3.0.dev1 adds client-specific setup and browser sessions that survive MCP disconnection. External client qualification is tracked separately.
 
 The Python core uses only the standard library (Python 3.9+). Reports embed their CSS and JavaScript and work offline. SQLite stores reviews locally. Optional agent integrations can send the authorized task to their configured provider; the bridge does not store provider credentials.
 
@@ -10,6 +10,8 @@ The Python core uses only the standard library (Python 3.9+). Reports embed thei
 pip install -e .
 # Official MCP server, Python 3.10+:
 pip install -e '.[mcp]'
+# Lossless editing of existing Codex TOML configuration:
+pip install -e '.[mcp,setup]'
 ```
 
 ## Review a proposal
@@ -82,21 +84,31 @@ Pause, resume, stop, priority and constraints apply at checkpoints between actio
 
 ## MCP and native interfaces
 
+Project setup supports Codex, Claude Code, Cursor, VS Code, Gemini CLI, OpenCode and Antigravity; Cline and Hermes receive manual-import fragments. Each export follows the client's schema. No provider credentials, global trust or automatic tool permissions are installed.
+
+```bash
+agent-bridge setup --project /absolute/project --client gemini-cli --dry-run
+agent-bridge setup --project /absolute/project --client gemini-cli
+agent-bridge doctor --project /absolute/project --client gemini-cli --handshake
+```
+
+The handshake probes this server with the official SDK; it does not qualify the commercial client or its model. See [the common integration contract](docs/AGENT_INTEGRATION.md) for configuration preservation and remote-use limits.
+
 Install the `mcp` extra, then configure your MCP client:
 
 ```json
 {"mcpServers":{"visual-bridge":{"command":"/absolute/path/to/python","args":["-m","agent_visual_bridge.mcp.server"],"env":{"AVB_DB":"/absolute/path/reviews.sqlite3"}}}}
 ```
 
-The executable uses the official Python SDK **1.30.0**. It exposes creation, revision, retrieval, receipts, questions, agent registration, progress and control acknowledgments. `visual_bridge_ask_human` opens the local browser and awaits a submission. `visual_bridge_ask_question` uses form elicitation when negotiated and returns an explicit fallback otherwise; decline and cancel remain distinct.
+The executable uses the official Python SDK **1.30.0**. It exposes creation, revision, retrieval, receipts, questions, agent registration, progress and control acknowledgments. `visual_bridge_ask_human` returns promptly with a review and browser URL; `wait: true` explicitly waits for submission. Timeout leaves the review pending. `open_browser: true` explicitly opens the browser on the server machine. `visual_bridge_ask_question` checks form elicitation support and falls back to a browser session when unavailable or rejected; decline and cancel remain distinct.
 
-`visual_bridge_open_review` advertises an MCP Apps resource when the host negotiates `io.modelcontextprotocol/ui`. The embedded App uses the official Apps SDK **2.0.3** and submits through an app-only action tool. Clients without Apps receive structured/textual review data without the native metadata or app-only tool. App visibility relies on the host's advertised capability; it is not independent cryptographic proof of human authorship. A reference host is tested; commercial desktop hosts still require qualification.
+`visual_bridge_open_review` advertises an MCP Apps resource when the host negotiates `io.modelcontextprotocol/ui`. The embedded App uses the official Apps SDK **2.0.3** and submits through an app-only action tool. Clients without Apps receive structured/textual review data and a browser session without native metadata or the app-only tool. A detached loopback supervisor per database keeps access alive across MCP restarts; access expiration never authorizes or deletes a review. `agent-bridge --db reviews.sqlite3 browser-stop` closes access for that database. App visibility relies on the host's advertised capability; it is not independent cryptographic proof of human authorship. A reference host is tested; commercial desktop hosts still require qualification.
 
 ## Security and limits
 
 The local server binds to loopback, checks Host and Origin, uses distinct human/agent session tokens, caps request size, and serves a restrictive CSP. Exports omit tokens and safely escape embedded JSON. Agent tokens cannot submit human decisions. Local filesystem access and an MCP host are trusted boundaries; this is a single-user local tool, not a remotely hosted authorization service.
 
-Project preferences persist language, detail and notifications. English translates static controls; dynamic messages remain French in this release. Policy rules describe exact operations, relative path scopes, external effects and reversibility. The host must truthfully describe and enforce its actions.
+Project preferences persist language, detail and notifications. English translates controls and browser lifecycle messages; agent content and canonical receipt text retain their source language. Policy rules describe exact operations, relative path scopes, external effects and reversibility. The host must truthfully describe and enforce its actions.
 
 Local metrics measure active review segments, submissions, questions, revisions, executed actions and resumes. Understanding and perceived effort require manual observations. [The pilot protocol](docs/PILOT.md) provides comparable terminal/bridge tasks; no user benefit is claimed without those observations.
 
@@ -118,6 +130,7 @@ python -m build
 The locked Node dependencies are used to build the native App; Node is unnecessary for installed report generation. CI runs the core on Python 3.9–3.14 and the browser/MCP qualification suite on Python 3.12, then checks the installed wheel without extras.
 
 - [Implementation plan and delivery status](docs/IMPLEMENTATION_PLAN.md)
+- [Agent-independent evolution plan and client research](docs/AGENT_AGNOSTIC_PLAN.md)
 - [Migration guide](docs/MIGRATION.md)
 - [Qualification matrix and limitations](docs/QUALIFICATION.md)
 - [Release notes](docs/RELEASE_NOTES.md)

@@ -19,6 +19,25 @@ def test_cli_init():
         assert len(data["items"]) >= 1
 
 
+def test_cli_utf8_proposal_and_receipt_import(tmp_path, capsys):
+    database = tmp_path / 'reviews.db'
+    proposal = tmp_path / 'proposal.json'
+    title = 'Révision du périmètre — hébergement'
+    proposal.write_text(json.dumps({'title': title, 'items': [{'id': 'a', 'title': title}]},
+                                   ensure_ascii=False), encoding='utf-8')
+    assert main(['--db', str(database), 'create', str(proposal)]) == 0
+    review = json.loads(capsys.readouterr().out)
+    assert review['title'] == title
+    feedback = {'review_id': review['review_id'], 'revision': 1, 'submitted_at': '2026-10-05T00:00:00Z',
+                'request_key': 'utf8-import', 'decisions': [{'id': 'a', 'decision_kind': 'approve',
+                    'fingerprint': review['items'][0]['authorization_fingerprint'], 'comment': title}]}
+    exported = tmp_path / 'decisions.json'
+    exported.write_text(json.dumps(feedback, ensure_ascii=False), encoding='utf-8')
+    assert main(['--db', str(database), 'submit', review['review_id'], str(exported)]) == 0
+    receipt = json.loads(capsys.readouterr().out)
+    assert receipt['decisions'][0]['comment'] == title
+
+
 def test_cli_auto_and_read():
     with tempfile.TemporaryDirectory() as tmpdir:
         input_json = Path(tmpdir) / "plan.json"

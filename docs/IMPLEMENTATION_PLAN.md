@@ -16,6 +16,8 @@ Les lots L0 à L7 et les outils de qualification L8 sont implémentés dans cett
 
 Voir [QUALIFICATION.md](QUALIFICATION.md) pour les preuves, versions et limites; [PILOT.md](PILOT.md) pour les trois tâches d’évaluation.
 
+L’évolution vers une installation et une qualification indépendantes de Codex est suivie dans [AGENT_AGNOSTIC_PLAN.md](AGENT_AGNOSTIC_PLAN.md), avec recherche des clients, lots et critères d’acceptation. Sa section d’avancement distingue les fonctions livrées dans 0.3.0.dev1 des qualifications et intégrations restantes.
+
 ## 1. Résultat attendu
 
 Permettre à un développeur de comprendre une proposition, guider l’agent, autoriser des actions précises et vérifier leur résultat avec peu d’interruptions.

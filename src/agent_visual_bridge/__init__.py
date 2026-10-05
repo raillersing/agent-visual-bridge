@@ -12,7 +12,7 @@ from agent_visual_bridge.sessions import ReviewService
 from agent_visual_bridge.adapters import CooperativeAgent, CodexTextExecutor
 from agent_visual_bridge.models import ValidationError, ConflictError
 
-__version__ = "0.2.0"
+__version__ = "0.3.0.dev1"
 __all__ = [
     "ReportType",
     "VisualBridge",
