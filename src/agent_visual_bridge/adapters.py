@@ -151,7 +151,10 @@ class CooperativeAgent:
                 constraints.append(decision["comment"])
             item_id = item["id"]
             request = ExecutionRequest(execution_id, self.review_id, review["revision"],
-                                       self.agent_id, self.session_id, execution_key, item, constraints)
+                                       self.agent_id, self.session_id, execution_key, item, constraints,
+                                       engine_id=getattr(self.executor, "engine_id", "legacy-callback"),
+                                       authorization={"decision": decision, "receipt_ids": review["receipts"],
+                                                      "policy_effect": policy["effect"]})
             try:
                 if hasattr(self.executor, "execute"):
                     value = self.executor.execute(request)

@@ -12,7 +12,7 @@ agent = CooperativeAgent(service, 'REVIEW_ID', engine, agent_id='my-engine')
 result = agent.run_next()
 ```
 
-The worker reads one UTF-8 JSON request from stdin. Fields: `contract_version=1`, `execution_id`, `review_id`, `revision`, `agent_id`, `session_id`, `fingerprint`, `item`, `constraints`. Constraints include the proposal constraints, submitted human constraints, checkpoint constraints and submitted comment. Provider credentials remain under host/engine control.
+The worker reads one UTF-8 JSON request from stdin. Fields: `contract_version=1`, `execution_id`, `review_id`, `revision`, `agent_id`, `session_id`, `engine_id`, `fingerprint`, `item`, `constraints`, `authorization`. The authorization object includes the exact selected decision, review receipt IDs and the evaluated policy effect. Constraints include the proposal constraints, submitted human constraints, checkpoint constraints and submitted comment. Provider credentials remain under host/engine control.
 
 The worker writes one JSON result to stdout:
 

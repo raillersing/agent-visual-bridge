@@ -23,6 +23,7 @@ def test_process_engine_receives_durable_mandate(tmp_path):
     service, review = authorized(tmp_path)
     worker = tmp_path / 'worker.py'
     worker.write_text('import sys,json\nr=json.load(sys.stdin)\n'
+        'assert r["engine_id"]=="json-process-v1" and r["authorization"]["decision"]["decision_kind"]=="approve" and r["authorization"]["receipt_ids"]\n'
         'print(json.dumps({"execution_id":r["execution_id"],"state":"succeeded",'
         '"evidence":[{"source":"worker","content":r["constraints"]}]}))\n')
     agent = CooperativeAgent(service, review['review_id'], JsonProcessExecutor([sys.executable, str(worker)], cwd=tmp_path))

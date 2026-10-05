@@ -1,7 +1,7 @@
 """Provider-neutral execution messages. Host configuration selects the engine."""
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from .models import ValidationError, canonical
@@ -17,6 +17,8 @@ class ExecutionRequest:
     fingerprint: str
     item: dict[str, Any]
     constraints: list[str]
+    engine_id: str = "legacy-callback"
+    authorization: dict[str, Any] = field(default_factory=dict)
     contract_version: int = 1
 
     def document(self):
