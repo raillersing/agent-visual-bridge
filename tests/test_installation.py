@@ -100,3 +100,16 @@ def test_doctor_handshake_is_server_proof_only(tmp_path):
     assert report['handshake']['commercial_client'] == 'not-tested'
     assert 'visual_bridge_open_review' in report['handshake']['tools']
     assert report['inference'] == 'not-tested'
+
+
+def test_named_server_migration_preserves_existing_permissions(tmp_path):
+    pytest.importorskip('tomlkit')
+    path = tmp_path / '.codex/config.toml'
+    path.parent.mkdir()
+    path.write_text('[mcp_servers.agent_visual_bridge]\ncommand = "/old/scripts/agent-bridge"\nargs = ["mcp"]\n'
+                    '[mcp_servers.agent_visual_bridge.tools.visual_bridge_get_review]\napproval_mode = "approve"\n', encoding='utf-8')
+    setup(tmp_path, 'codex', server_name='agent_visual_bridge')
+    assert 'approval_mode = "approve"' in path.read_text()
+    assert 'mcp_servers.visual-bridge' not in path.read_text()
+    assert setup(tmp_path, 'codex', server_name='agent_visual_bridge')['state'] == 'unchanged'
+    assert doctor(tmp_path, 'codex', server_name='agent_visual_bridge')['configuration_matches']

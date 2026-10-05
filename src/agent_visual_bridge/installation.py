@@ -125,19 +125,21 @@ def configuration(project, client):
     return root, entry
 
 
-def setup(project, client, *, dry_run=False, output=None):
+def setup(project, client, *, dry_run=False, output=None, server_name='visual-bridge'):
+    if not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', server_name):
+        raise ValueError('Invalid MCP server name')
     root, entry = configuration(project, client)
     filename, table = CLIENTS[client]
     if client == 'hermes':
         # JSON is valid YAML; export a fragment, never mutate the global file.
-        content = json.dumps({table: {'visual-bridge': entry}}, indent=2) + '\n'
+        content = json.dumps({table: {server_name: entry}}, indent=2) + '\n'
     elif client == 'codex':
-        content = '[mcp_servers.visual-bridge]\n' + '\n'.join(
+        content = f'[mcp_servers.{server_name}]\n' + '\n'.join(
             f'{key} = {json.dumps(value)}' for key, value in entry.items() if key != 'env')
-        content += '\n[mcp_servers.visual-bridge.env]\n' + '\n'.join(
+        content += f'\n[mcp_servers.{server_name}.env]\n' + '\n'.join(
             f'{key} = {json.dumps(value)}' for key, value in entry['env'].items()) + '\n'
     else:
-        content = json.dumps({table: {'visual-bridge': entry}}, indent=2) + '\n'
+        content = json.dumps({table: {server_name: entry}}, indent=2) + '\n'
     destination = Path(output).resolve() if output else root / filename if filename else None
     result = {'client': client, 'project': str(root), 'path': str(destination) if destination else None,
               'dry_run': dry_run, 'configuration': content, 'qualification': 'configuration-only'}
@@ -154,13 +156,13 @@ def setup(project, client, *, dry_run=False, output=None):
                 raise ValueError('Editing existing TOML requires pip install "agent-visual-bridge[setup]"; use --output to export a new fragment') from exc
             document = tomlkit.parse(previous)
             servers = document.setdefault(table, {})
-            existing = servers.get('visual-bridge')
+            existing = servers.get(server_name)
             if existing is not None and existing != entry and not _owned(existing):
                 raise ValueError('visual-bridge entry belongs to another command; inspect manually')
-            if existing == entry:
+            if isinstance(existing, dict) and all(existing.get(k) == v for k, v in entry.items()):
                 content = previous
             else:
-                servers['visual-bridge'] = entry
+                servers[server_name] = {**(existing or {}), **entry}
                 content = tomlkit.dumps(document)
         elif client == 'hermes':
             raise ValueError('Export Hermes to a new file, then import the fragment explicitly')
@@ -170,12 +172,12 @@ def setup(project, client, *, dry_run=False, output=None):
             if servers is not None:
                 if not isinstance(servers.value, dict):
                     raise ValueError('MCP configuration must be an object')
-                existing = servers.value.get('visual-bridge')
+                existing = servers.value.get(server_name)
                 if existing is not None and existing != entry and not _owned(existing):
                     raise ValueError('visual-bridge entry belongs to another command; inspect manually')
-                content = previous if existing == entry else _put(previous, servers, 'visual-bridge', entry)
+                content = previous if isinstance(existing, dict) and all(existing.get(k) == v for k, v in entry.items()) else _put(previous, servers, server_name, {**(existing or {}), **entry})
             else:
-                content = _put(previous, document, table, {'visual-bridge': entry})
+                content = _put(previous, document, table, {server_name: entry})
             _JSONC(content).document()
     # Report the bridge fragment only: unrelated entries may contain secrets.
     result['state'] = 'unchanged' if previous == content else 'preview' if dry_run else 'written'
@@ -199,7 +201,7 @@ def setup(project, client, *, dry_run=False, output=None):
     return result
 
 
-def doctor(project, client, *, handshake=False):
+def doctor(project, client, *, handshake=False, server_name='visual-bridge'):
     root, entry = configuration(project, client)
     filename, table = CLIENTS[client]
     from importlib.util import find_spec
@@ -219,10 +221,10 @@ def doctor(project, client, *, handshake=False):
                 import tomlkit
             except ImportError as exc:
                 raise ValueError('TOML diagnostics require agent-visual-bridge[setup]') from exc
-            configured = tomlkit.parse(source).get(table, {}).get('visual-bridge')
+            configured = tomlkit.parse(source).get(table, {}).get(server_name)
         else:
-            configured = _JSONC(source).document().value.get(table, {}).get('visual-bridge')
-        result['configuration_matches'] = configured == entry
+            configured = _JSONC(source).document().value.get(table, {}).get(server_name)
+        result['configuration_matches'] = isinstance(configured, dict) and all(configured.get(k) == v for k, v in entry.items())
     if handshake:
         if not result['mcp_installed']:
             raise ValueError('Handshake requires agent-visual-bridge[mcp]')
