@@ -26,10 +26,10 @@ class HumanAnswer(BaseModel):
     answer: str = Field(description='Your answer to the question')
 
 
-def create_server(database=None):
+def create_server(database=None, **transport_settings):
     from .. import __version__
     service = ReviewService(database)
-    mcp = FastMCP('agent-visual-bridge')
+    mcp = FastMCP('agent-visual-bridge', **transport_settings)
     mcp._mcp_server.version = __version__
 
     @mcp.tool()
@@ -66,20 +66,28 @@ def create_server(database=None):
         return service.publish_item_reply(review_id, item_id, message, category=category, question_seq=question_seq)
 
     @mcp.tool()
-    def visual_bridge_register_agent(review_id: str, agent_id: str, capabilities: list[str]) -> dict[str, Any]:
+    def visual_bridge_register_agent(review_id: str, agent_id: str, capabilities: list[str],
+                                     session_id: str = None, lease_seconds: int = 300) -> dict[str, Any]:
         """Declare actual cooperative controls. Do not advertise capabilities your host lacks."""
-        return service.register_agent(review_id, agent_id, capabilities)
+        return service.register_agent(review_id, agent_id, capabilities, session_id, lease_seconds)
 
     @mcp.tool()
-    def visual_bridge_acknowledge_control(review_id: str, control_id: str, state: str, reason: str = '') -> dict[str, Any]:
+    def visual_bridge_release_agent(review_id: str, agent_id: str, session_id: str) -> dict[str, Any]:
+        """Release your session before an explicit handoff. Never transfer pending controls."""
+        return service.release_agent(review_id, agent_id, session_id)
+
+    @mcp.tool()
+    def visual_bridge_acknowledge_control(review_id: str, control_id: str, state: str, reason: str = '',
+                                          agent_id: str = None, session_id: str = None) -> dict[str, Any]:
         """Confirm a control only after your execution engine has acknowledged/applied it."""
-        return service.acknowledge_control(review_id, control_id, state, reason)
+        return service.acknowledge_control(review_id, control_id, state, reason, agent_id, session_id)
 
     @mcp.tool()
     def visual_bridge_publish_progress(review_id: str, item_id: str, state: str,
-                                       message: str = '', evidence: list = None, revision: int = None) -> dict[str, Any]:
+                                       message: str = '', evidence: list = None, revision: int = None,
+                                       execution_id: str = None) -> dict[str, Any]:
         """Publish action state and concrete verification evidence, including unknown outcomes."""
-        return service.publish_progress(review_id, item_id, state, message, evidence, revision)
+        return service.publish_progress(review_id, item_id, state, message, evidence, revision, execution_id)
 
     @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True))
     def visual_bridge_read_report(html_path: str) -> dict[str, Any]:
@@ -176,6 +184,8 @@ def create_server(database=None):
         if path.startswith('/api/events'):
             from urllib.parse import parse_qs, urlsplit
             value = service.events(review_id, int(parse_qs(urlsplit(path).query).get('after', ['0'])[0]))
+        elif path == '/api/agents':
+            value = service.agent_sessions(review_id)
         elif path == '/api/review':
             value = review
         elif path == '/api/submit':
@@ -186,7 +196,7 @@ def create_server(database=None):
         elif path == '/api/question':
             value = service.ask_item_question(review_id, data.get('item_id'), data.get('message'))
         elif path == '/api/control':
-            value = service.request_control(review_id, data.get('command'), data.get('payload'))
+            value = service.request_control(review_id, data.get('command'), data.get('payload'), data.get('agent_id'), data.get('session_id'))
         elif path == '/api/revision-request':
             value = service.request_revision(review_id, data.get('revision'), data.get('item_id'), data.get('changes'))
         elif path == '/api/settings':

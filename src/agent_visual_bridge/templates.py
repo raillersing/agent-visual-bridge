@@ -104,6 +104,7 @@ def render_review(review, runtime=None, settings=None):
 <label for="filter">Afficher</label><select id="filter"><option value="all">Tous</option><option value="pending">En attente</option><option value="decided">Décidés</option></select>
 <label for="search">Rechercher</label><input id="search" type="search"></nav>
 <aside id="controls"><h2>Pilotage de l’agent</h2><p id="capabilities">Aucun moteur connecté</p>
+<label for="agent-session">Session de l’agent</label><select id="agent-session"></select>
 <button data-control="pause">Pause</button><button data-control="resume">Reprendre</button><button data-control="stop">Arrêter</button>
 <label for="constraint">Nouvelle contrainte</label><input id="constraint"><button data-control="constraint">Transmettre la contrainte</button>
 <label for="priority">Priorité : identifiants séparés par des virgules</label><input id="priority"><button data-control="priority">Changer la priorité</button>

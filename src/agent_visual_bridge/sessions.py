@@ -207,29 +207,86 @@ class ReviewService:
             seq = Store.event(db, review_id, "item_message", doc)
         return {"seq": seq, **doc}
 
-    def register_agent(self, review_id, agent_id, capabilities):
-        allowed = {"pause", "resume", "stop", "priority", "constraint", "enforce_policy"}
-        if not isinstance(capabilities, list) or not set(capabilities) <= allowed:
-            raise ValidationError("Unknown agent capability")
-        self.get_review(review_id)
-        with self.store.transaction() as db:
-            Store.event(db, review_id, "agent_registered", {"agent_id": text(agent_id, "agent_id", 200),
-                        "capabilities": capabilities})
-        return {"agent_id": agent_id, "capabilities": capabilities}
+    def _active_sessions(self, db, review_id):
+        import time
+        sessions = {}
+        for row in db.execute("SELECT document FROM events WHERE review_id=? AND kind IN ('agent_registered','agent_released') ORDER BY seq", (review_id,)):
+            event = json.loads(row[0])
+            key = event.get("session_id")
+            if key:
+                if event.get("released"):
+                    sessions.pop(key, None)
+                else:
+                    sessions[key] = event
+        return {key: value for key, value in sessions.items() if value["expires_at"] > time.time()}
 
-    def request_control(self, review_id, command, payload=None):
+    def agent_sessions(self, review_id):
+        with self.store.transaction() as db:
+            self._row(db, review_id)
+            active = list(self._active_sessions(db, review_id).values())
+            if active:
+                return active
+            row = db.execute("SELECT document FROM events WHERE review_id=? AND kind='agent_registered' ORDER BY seq DESC LIMIT 1", (review_id,)).fetchone()
+            legacy = json.loads(row[0]) if row else None
+            return [legacy] if legacy and not legacy.get("session_id") else []
+
+    def register_agent(self, review_id, agent_id, capabilities, session_id=None, lease_seconds=300):
+        import time
+        allowed = {"pause", "resume", "stop", "priority", "constraint", "enforce_policy"}
+        if not isinstance(capabilities, list) or any(not isinstance(c, str) for c in capabilities) or not set(capabilities) <= allowed:
+            raise ValidationError("Unknown agent capability")
+        if not isinstance(lease_seconds, int) or isinstance(lease_seconds, bool) or not 1 <= lease_seconds <= 86400:
+            raise ValidationError("Invalid agent lease")
+        doc = {"agent_id": text(agent_id, "agent_id", 200), "capabilities": capabilities}
+        if session_id is not None:
+            if not isinstance(session_id, str) or not session_id.strip():
+                raise ValidationError("Agent session identifier must be nonempty")
+            doc.update(session_id=text(session_id, "session_id", 200), expires_at=time.time() + lease_seconds)
+        with self.store.transaction() as db:
+            self._row(db, review_id)
+            if session_id is not None:
+                prior = db.execute("SELECT document FROM events WHERE review_id=? AND kind='agent_registered' AND json_extract(document,'$.session_id')=? ORDER BY seq DESC LIMIT 1", (review_id, session_id)).fetchone()
+                if prior and json.loads(prior[0])["agent_id"] != agent_id:
+                    raise ConflictError("Session belongs to another agent")
+            Store.event(db, review_id, "agent_registered", doc)
+        return doc
+
+    def release_agent(self, review_id, agent_id, session_id):
+        with self.store.transaction() as db:
+            self._row(db, review_id)
+            owner = self._active_sessions(db, review_id).get(session_id)
+            if not owner or owner["agent_id"] != agent_id:
+                raise ConflictError("Agent session is not active")
+            doc = {"agent_id": agent_id, "session_id": session_id, "released": True}
+            Store.event(db, review_id, "agent_released", doc)
+        return doc
+
+    def request_control(self, review_id, command, payload=None, agent_id=None, session_id=None):
         if command not in {"pause", "resume", "stop", "priority", "constraint"}:
             raise ValidationError("Unknown control")
-        events = self.events(review_id)
-        agent = next((e for e in reversed(events) if e["kind"] == "agent_registered"), None)
-        doc = {"control_id": uuid4().hex, "command": command, "payload": payload or {},
-               "state": "requested" if agent and command in agent["capabilities"] else "unsupported"}
-        canonical(doc)
         with self.store.transaction() as db:
+            self._row(db, review_id)
+            active = self._active_sessions(db, review_id)
+            candidates = [a for a in active.values() if (agent_id is None or a["agent_id"] == agent_id)
+                          and (session_id is None or a["session_id"] == session_id)]
+            if len(candidates) > 1:
+                raise ConflictError("Select an agent session for this control")
+            agent = candidates[0] if candidates else None
+            if not active and agent_id is None and session_id is None:
+                row = db.execute("SELECT document FROM events WHERE review_id=? AND kind='agent_registered' ORDER BY seq DESC LIMIT 1", (review_id,)).fetchone()
+                legacy = json.loads(row[0]) if row else None
+                if legacy and not legacy.get("session_id"):
+                    agent = legacy
+            doc = {"control_id": uuid4().hex, "command": command,
+                   "payload": {} if payload is None else payload,
+                   "state": "requested" if agent and command in agent["capabilities"] else "unsupported"}
+            if agent:
+                doc.update(agent_id=agent["agent_id"], session_id=agent.get("session_id"))
+            canonical(doc)
             Store.event(db, review_id, "control_requested", doc)
         return doc
 
-    def acknowledge_control(self, review_id, control_id, state, reason=""):
+    def acknowledge_control(self, review_id, control_id, state, reason="", agent_id=None, session_id=None):
         if state not in {"acknowledged", "applied", "rejected"}:
             raise ValidationError("Unknown acknowledgement")
         with self.store.transaction() as db:
@@ -242,11 +299,16 @@ class ReviewService:
                            "acknowledged": {"applied", "rejected"}}
             if not current or state not in transitions.get(current["state"], set()):
                 raise ConflictError("Control cannot transition to this state")
+            if current.get("session_id"):
+                owner = self._active_sessions(db, review_id).get(session_id)
+                if (not owner or current["session_id"] != session_id
+                        or current["agent_id"] != agent_id or owner["agent_id"] != agent_id):
+                    raise ConflictError("Control belongs to another or expired agent session")
             doc = {**current, "state": state, "reason": text(reason, "reason")}
             Store.event(db, review_id, "control_updated", doc)
         return doc
 
-    def publish_progress(self, review_id, item_id, state, message="", evidence=None, revision=None):
+    def publish_progress(self, review_id, item_id, state, message="", evidence=None, revision=None, execution_id=None):
         if state not in {"not_started", "running", "succeeded", "failed", "unknown", "skipped"}:
             raise ValidationError("Unknown execution state")
         review = self.get_review(review_id)
@@ -263,8 +325,17 @@ class ReviewService:
         doc = {"item_id": item_id, "revision": review["revision"], "state": state,
                "fingerprint": item["authorization_fingerprint"],
                "message": text(message, "message"), "evidence": evidence or []}
+        if not isinstance(doc["evidence"], list):
+            raise ValidationError("Progress evidence must be a list")
+        if execution_id is not None:
+            doc["execution_id"] = execution_id
         canonical(doc)
         with self.store.transaction() as db:
+            if execution_id is not None:
+                claim = db.execute("SELECT document FROM events WHERE review_id=? AND kind='execution_started' AND json_extract(document,'$.execution_id')=?", (review_id, execution_id)).fetchone()
+                claimed = json.loads(claim[0]) if claim else None
+                if not claimed or claimed["item_id"] != item_id or claimed["revision"] != review["revision"] or claimed["key"] != doc["fingerprint"]:
+                    raise ConflictError("Progress does not match execution claim")
             Store.event(db, review_id, "progress", doc)
         return doc
 

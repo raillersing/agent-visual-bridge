@@ -59,7 +59,29 @@ Le SDK Python `ReviewService` fournit le même contrat. Sans navigateur accessib
 
 ## Limites actuelles
 
-- MCP stdio seulement. HTTP et deuxième moteur d’exécution restent au jalon suivant.
+- MCP stdio par défaut; [HTTP local authentifié](MCP_HTTP.md) et [moteur JSON portable](EXECUTION.md) disponibles. Les interfaces HTTP des clients commerciaux restent à qualifier.
 - SSH, WSL et conteneurs demandent un transfert de port explicite; aucun tunnel automatique n’est créé.
 - Exporter une configuration ne qualifie ni le modèle ni toutes les interfaces natives.
-- L’installation ERP existante est préservée; sa migration attend les qualifications supplémentaires. Aucune donnée métier ERP n’a été modifiée dans cette étape.
+- ERP Hospitality est migré vers `0.3.0.dev2`, avec conservation de sa base et de son travail métier. Les essais automatisés utilisent des bases séparées; le pilote humain et deux agents non Codex restent à qualifier.
+
+## Installation existante
+
+`setup` et `doctor` acceptent `--server-name NOM` pour conserver une ancienne entrée MCP. La fusion préserve ses permissions ciblées et les réglages étrangers; elle ne crée pas une deuxième entrée sous un autre nom. Sauvegarder SQLite avant mise à jour, conserver `AVB_DB` et vérifier la restauration sur une copie jetable.
+
+## Client Windows et serveur dans WSL — 0.3.0.dev3
+
+Depuis le projet dans WSL, exporter explicitement le lanceur pour un client **Windows natif** :
+
+```bash
+agent-bridge setup --project "$PWD" --client opencode --wsl-distro Ubuntu
+agent-bridge setup --project "$PWD" --client antigravity --wsl-distro Ubuntu
+agent-bridge doctor --project "$PWD" --client antigravity --wsl-distro Ubuntu --handshake
+```
+
+Utiliser le nom réel de la distribution. Le profil lance `wsl.exe`, sélectionne cette distribution, fixe le répertoire du projet et transmet les variables du bridge au Python Linux. Les arguments restent séparés, y compris pour les chemins contenant des espaces. Aucun tunnel, accès réseau public, réglage global ou identifiant fournisseur n’est ajouté. Un client exécuté **dans WSL** conserve le lanceur natif sans cette option.
+
+Le diagnostic vérifie ce lanceur, et refuse un handshake lorsque la configuration installée diffère du profil sélectionné. Il ne remplace pas silencieusement une commande défaillante par le Python courant. Un handshake SDK réussi reste une preuve de transport, sans qualifier l’inférence ou l’interface commerciale.
+
+OpenCode Zen utilise son propre fournisseur `opencode`, indépendant d’Ollama Cloud. L’essai gratuit du 6 octobre a reçu un HTTP 403; il ne qualifie pas l’offre Zen utilisée par l’utilisateur. Desktop est installé, mais le client Zen réellement authentifié reste à confirmer. Hermes a réussi la lecture réelle d’un reçu avec son fournisseur Codex; ces identifiants sont gérés par Hermes, sans export de clés dans le bridge. Antigravity reçoit un profil `.agents/mcp_config.json`; son chargement et son interface doivent être vérifiés dans la version installée.
+
+Références : [OpenCode Zen](https://opencode.ai/docs/zen/), [Antigravity MCP](https://www.antigravity.google/docs/mcp).

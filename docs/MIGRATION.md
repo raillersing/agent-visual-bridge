@@ -1,5 +1,15 @@
 # Migration
 
+## 0.3.0.dev2: execution, controls and optional HTTP
+
+Schema version remains 1. Events add optional session/execution identities and lease expiry; existing reviews and receipts remain readable. Keep the exact database path and take a SQLite online backup before upgrading. Verify backup restoration in a disposable database, never by replacing the active database.
+
+`setup --server-name EXISTING_NAME` preserves named MCP entries and additional targeted permissions. Do not install a duplicate entry under the default name. ERP Hospitality scripts now use the common installer, preserve their original entry names and make a backup before upgrade.
+
+`CooperativeAgent` now registers a leased session (300 seconds). Renew explicitly and release before handoff. Bound controls require matching active owner IDs; legacy registrations without a session keep their documented weaker coordination. Unknown outcomes block replay; unclassified executor errors now report unknown rather than implying a confirmed failure. Reconciliation must select an existing execution and records its original revision. See [execution contract](EXECUTION.md).
+
+Stdio remains default. HTTP requires an explicit transport flag and private token file; see [local HTTP configuration](MCP_HTTP.md). Existing client configurations are not moved to HTTP.
+
 ## 0.3.0.dev1: MCP interaction change
 
 The official MCP `visual_bridge_ask_human` returns immediately by default. Pass `wait: true` to preserve the blocking receipt workflow; `open_browser: true` explicitly opens the server's browser. A wait timeout no longer expires the review. Poll `visual_bridge_get_review`, then fetch its receipt; `visual_bridge_open_review` renews browser access. The legacy compatibility dispatcher and synchronous Python/CLI waiting APIs keep their existing behavior.

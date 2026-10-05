@@ -67,6 +67,8 @@ class LocalServer:
                         self.respond(200, body, 'text/html; charset=utf-8', nonce)
                     elif path.path == '/api/review':
                         self.respond(200, owner.service.get_review(owner.review_id))
+                    elif path.path == '/api/agents':
+                        self.respond(200, owner.service.agent_sessions(owner.review_id))
                     elif path.path == '/api/events':
                         after = int(parse_qs(path.query).get('after', ['0'])[0])
                         self.respond(200, owner.service.events(owner.review_id, max(0, after)))
@@ -108,7 +110,7 @@ class LocalServer:
                     elif path == '/api/question':
                         result = owner.service.ask_item_question(owner.review_id, data.get('item_id'), data.get('message'))
                     elif path == '/api/control':
-                        result = owner.service.request_control(owner.review_id, data.get('command'), data.get('payload'))
+                        result = owner.service.request_control(owner.review_id, data.get('command'), data.get('payload'), data.get('agent_id'), data.get('session_id'))
                     elif path == '/api/revision-request':
                         result = owner.service.request_revision(owner.review_id, data.get('revision'), data.get('item_id'), data.get('changes'))
                     elif path == '/api/settings':
@@ -119,15 +121,17 @@ class LocalServer:
                     elif path == '/api/cancel':
                         result = owner.service.close_review(owner.review_id)
                     elif path == '/api/agent/register':
-                        result = owner.service.register_agent(owner.review_id, data.get('agent_id'), data.get('capabilities'))
+                        result = owner.service.register_agent(owner.review_id, data.get('agent_id'), data.get('capabilities'), data.get('session_id'), data.get('lease_seconds', 300))
+                    elif path == '/api/agent/release':
+                        result = owner.service.release_agent(owner.review_id, data.get('agent_id'), data.get('session_id'))
                     elif path == '/api/agent/reply':
                         result = owner.service.publish_item_reply(owner.review_id, data.get('item_id'), data.get('message'), category=data.get('category', 'explanation'), question_seq=data.get('question_seq'))
                     elif path == '/api/agent/revise':
                         result = owner.service.revise_review(owner.review_id, data.get('proposal'), data.get('revision'))
                     elif path == '/api/agent/progress':
-                        result = owner.service.publish_progress(owner.review_id, data.get('item_id'), data.get('state'), data.get('message', ''), data.get('evidence'), data.get('revision'))
+                        result = owner.service.publish_progress(owner.review_id, data.get('item_id'), data.get('state'), data.get('message', ''), data.get('evidence'), data.get('revision'), data.get('execution_id'))
                     elif path == '/api/agent/acknowledge':
-                        result = owner.service.acknowledge_control(owner.review_id, data.get('control_id'), data.get('state'), data.get('reason', ''))
+                        result = owner.service.acknowledge_control(owner.review_id, data.get('control_id'), data.get('state'), data.get('reason', ''), data.get('agent_id'), data.get('session_id'))
                     else:
                         self.respond(404, {'error': 'Not found'})
                         return

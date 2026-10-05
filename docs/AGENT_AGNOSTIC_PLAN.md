@@ -1,8 +1,26 @@
 # Plan d’évolution — indépendance des agents et des clients
 
-Date : 3 octobre 2026. **Statut : plan et avancement de l’implémentation locale; qualification externe partielle.**
+Date initiale : 3 octobre 2026. Mise à jour : 5 octobre 2026. **Statut : plan et avancement de l’implémentation locale; qualification externe partielle.**
 
-### Avancement — 0.3.0.dev1, 3 octobre 2026
+### Mise à jour — 0.3.0.dev3, 6 octobre 2026
+
+Hermes/Codex est qualifié dans un parcours technique complet avec décisions simulées explicitement marquées. OpenCode Windows se connecte réellement au serveur MCP; l’inférence Zen de la CLI reste refusée. Antigravity a un profil Windows/WSL vérifié par SDK, sans qualification de son interface. L’export `--wsl-distro` et le diagnostic de la commande choisie sont ajoutés. La CI précédente est entièrement verte après relance des runners. Le pilote humain et le deuxième client restent à réaliser; [preuves actuelles](QUALIFICATION.md).
+
+### Avancement actuel — 0.3.0.dev2, 5 octobre 2026
+
+| Lot | État vérifié |
+|---|---|
+| M0–M3 | Socle déjà livré; migration des noms MCP et conservation des permissions ajoutées |
+| M4 | Contrat versionné, moteur subprocess JSON réel, sessions avec bail, commandes adressées, résultat inconnu et réconciliation; deuxième client LLM toujours non qualifié |
+| M5 | MCP Streamable HTTP local, authentifié, testé avec le vrai SDK; stdio conservé |
+| M6 ERP | Installation commune et migration réalisées; sauvegarde, conservation et tests du paquet installé dans des bases isolées |
+| M6 agents | Hermes/OpenCode retenus et réellement essayés; échecs fournisseur documentés, **BLOQUÉ** pour le parcours complet |
+| M6 interfaces/humains | Hôte Apps de référence et SDK testés; client commercial et participants **EN ATTENTE**, protocole préparé |
+| M7 | Étude des frontières ACP documentée; prototype conditionnel reporté après qualification des agents |
+
+Le jalon global reste **PARTIEL**. Les cases du plan original ci-dessous restent une description des exigences; cette table et [QUALIFICATION.md](QUALIFICATION.md) décrivent ce qui est vérifié. Voir [le contrat moteur](EXECUTION.md), [HTTP local](MCP_HTTP.md), [les essais externes restants](CLIENT_PILOT_CHECKLIST.md) et [l’étude ACP](ACP_SPIKE.md).
+
+### Instantané historique — 0.3.0.dev1, 3 octobre 2026
 
 Le texte ci-dessous conserve le plan proposé. Une première étape est maintenant implémentée localement :
 
@@ -161,11 +179,11 @@ Acceptation : installation dans un projet vierge sans Codex, relance idempotente
 
 Modules : `adapters.py`, nouveaux modules spécifiques, `sessions.py`, `models.py`, stockage.
 
-- [ ] Définir `ExecutionRequest`/`ExecutionResult` : item, révision, mandat, contraintes, identités moteur/session/exécution, statut, preuves et erreurs typées.
-- [ ] Séparer l’exécuteur Codex; préserver `from agent_visual_bridge import CodexTextExecutor` et les usages existants.
-- [ ] Déclarer les contrôles réellement disponibles, notamment pause entre actions versus interruption active. Ne pas inférer l’un de l’autre.
+- [x] Définir `ExecutionRequest`/`ExecutionResult` : item, révision, mandat, contraintes, identités moteur/session/exécution, statut, preuves et erreurs typées.
+- [x] Séparer l’exécuteur Codex; préserver `from agent_visual_bridge import CodexTextExecutor` et les usages existants.
+- [x] Déclarer les contrôles réellement disponibles, notamment pause entre actions versus interruption active. Ne pas inférer l’un de l’autre.
 - [ ] Cibler commandes et accusés sur une exécution identifiée; rejeter les accusés d’un autre agent. Définir la propriété, les transferts et le comportement après expiration d’une session.
-- [ ] Distinguer échec confirmé et effet inconnu après timeout/crash; imposer réconciliation avant répétition d’une action possiblement effectuée.
+- [x] Distinguer échec confirmé et effet inconnu après timeout/crash; imposer réconciliation avant répétition d’une action possiblement effectuée.
 - [ ] Fournir un exécuteur Python neutre avec preuves vérifiées, puis un deuxième moteur réel choisi parmi les clients accessibles après étude de son API/CLI. Pas d’exécution arbitraire de commandes proposées par le modèle sans validation.
 
 Acceptation : deux moteurs consomment le même contrat; un contrôle non pris en charge est visible; un timeout ne produit ni faux succès ni répétition aveugle. Les règles/sandboxes du moteur restent applicables. Dépendances : M0, M3; migration du stockage testée.
@@ -174,10 +192,10 @@ Acceptation : deux moteurs consomment le même contrat; un contrôle non pris en
 
 Modules : `mcp/server.py`, `mcp/sdk.py`, installation, tests de transport.
 
-- [ ] Ajouter le transport officiel en option avec SDK versionné; ne pas remplacer stdio.
-- [ ] Lier par défaut à loopback, vérifier Origin/Host, gérer authentification, sessions, reconnexion et arrêt. Séparer jetons MCP et droits de soumission humaine.
-- [ ] Éviter les secrets dans les paramètres d’URL et les logs; utiliser les mécanismes documentés du client pour les credentials.
-- [ ] Tester un véritable client Streamable HTTP. L’API navigateur existante ne compte pas comme qualification de ce transport.
+- [x] Ajouter le transport officiel en option avec SDK versionné; ne pas remplacer stdio.
+- [x] Lier par défaut à loopback, vérifier Origin/Host, gérer authentification, sessions, reconnexion et arrêt. Séparer jetons MCP et droits de soumission humaine.
+- [x] Éviter les secrets dans les paramètres d’URL et les logs; utiliser les mécanismes documentés du client pour les credentials.
+- [x] Tester un véritable client Streamable HTTP. L’API navigateur existante ne compte pas comme qualification de ce transport.
 
 Acceptation : mêmes contrats en stdio/HTTP, origines refusées, sessions isolées, reprise sans perte. Dépendances : M1–M3. Hébergement public et tunnels automatiques hors de cette livraison; une future distribution distante aura son propre modèle d’identité et d’autorisation.
 
@@ -189,7 +207,7 @@ Modules : tests, CI, `docs/QUALIFICATION.md`, guides et scripts ERP de migration
 - [ ] Exécuter le parcours complet dans au moins deux clients non Codex; candidats initiaux Claude Code et Gemini CLI, avec OpenCode/Hermes en alternative selon accès réel.
 - [ ] Qualifier une interface Apps commerciale, par exemple VS Code, avant toute promesse de support natif. Capturer version, capacités, parcours, limites et erreurs.
 - [ ] Automatiser les contrats dans la CI; réserver aux vrais clients les essais qui nécessitent compte, UI ou modèle. Un compte indisponible laisse la case partielle, sans simulation présentée comme essai réel.
-- [ ] Migrer les scripts locaux ERP vers l’installation commune après validation : préserver revues, reçus, configurations étrangères et modifications métier. Sauvegarder SQLite avant toute migration de schéma et tester la restauration.
+- [x] Migrer les scripts locaux ERP vers l’installation commune après validation : préserver revues, reçus, configurations étrangères et modifications métier. Sauvegarder SQLite avant toute migration de schéma et tester la restauration.
 - [ ] Comparer un petit pilote humain multi-client : temps d’accès à la revue, réussite de la tâche, compréhension du mandat, interruptions et reprise après erreur.
 
 Acceptation : matrice publiée avec preuves relisibles, deux clients non Codex qualifiés pour le socle, installation ERP reproduite sans perte. Dépendances : M1–M3 pour la revue; M4/M5 pour les fonctions correspondantes.
@@ -197,7 +215,7 @@ Acceptation : matrice publiée avec preuves relisibles, deux clients non Codex q
 ### M7 — Étude ACP · P2 · taille S
 
 - [ ] Faire un prototype uniquement si un besoin réel exige pilotage de sessions d’éditeur, notifications ou annulation via ACP.
-- [ ] Comparer l’apport à un adaptateur coopératif simple, documenter les limites d’application des décisions.
+- [x] Comparer l’apport à un adaptateur coopératif simple, documenter les limites d’application des décisions.
 
 Ce lot ne bloque pas la première livraison indépendante de Codex.
 

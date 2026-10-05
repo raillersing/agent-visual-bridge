@@ -182,3 +182,27 @@ def test_keyboard_narrow_layout_enlarged_text_and_submission_lock(browser, tmp_p
         expect(page.locator('#status-a')).to_be_disabled()
         assert service.get_review(review['review_id'])['decisions']['a']['comment'] == 'Keep compatibility'
         page.screenshot(path='/tmp/avb-mobile-qualification.png', full_page=True)
+
+
+def test_browser_selects_control_owner_and_removes_released_session(browser, tmp_path):
+    service = ReviewService(tmp_path / 'owners.db')
+    review = service.create_review({'items': [{'id': 'a'}]})
+    first = CooperativeAgent(service, review['review_id'], lambda *_: [], 'first')
+    second = CooperativeAgent(service, review['review_id'], lambda *_: [], 'second')
+    with LocalServer(service, review['review_id']) as server:
+        page = browser.new_page()
+        page.goto(server.url)
+        expect(page.locator('#agent-session option')).to_have_count(3)
+        expect(page.locator('[data-control="pause"]')).to_be_disabled()
+        page.locator('#agent-session').select_option(first.session_id)
+        with page.expect_response(lambda response: response.url.endswith('/api/control') and response.request.method == 'POST') as response:
+            page.locator('[data-control="pause"]').click()
+        assert response.value.json()['session_id'] == first.session_id
+        assert first.run_next()['state'] == 'paused'
+        assert second.run_next()['state'] == 'waiting'
+        first.release()
+        expect(page.locator('#agent-session option')).to_have_count(2)
+        expect(page.locator('#agent-session')).to_have_value(second.session_id)
+        expect(page.locator('[data-control="pause"]')).to_be_enabled()
+        assert not service.get_review(review['review_id'])['decisions']
+        page.close()

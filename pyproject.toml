@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-visual-bridge"
-version = "0.3.0.dev1"
+version = "0.3.0.dev3"
 description = "Universal, local-first, zero-dependency visual arbitration bridge between AI coding agents and human developers."
 readme = "README.md"
 license = { text = "MIT" }
