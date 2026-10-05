@@ -53,11 +53,13 @@ def main(argv=None):
     setup.add_argument('--client', choices=CLIENTS, required=True)
     setup.add_argument('--dry-run', action='store_true')
     setup.add_argument('--server-name', default='visual-bridge')
+    setup.add_argument('--wsl-distro', help='Export a Windows client launcher for this Linux project via the named WSL distribution')
     setup.add_argument('--output', help='Export to a specific file instead of the client configuration')
     doctor = commands.add_parser('doctor', help='Inspect configuration; never infer provider availability')
     doctor.add_argument('--project', required=True)
     doctor.add_argument('--client', choices=CLIENTS, required=True)
     doctor.add_argument('--server-name', default='visual-bridge')
+    doctor.add_argument('--wsl-distro', help='Verify the exported Windows-to-WSL launcher')
     doctor.add_argument('--handshake', action='store_true', help='Probe the server with the official SDK, not the commercial client')
     mcp = commands.add_parser('mcp', help='Run the optional official MCP server')
     mcp.add_argument('--transport', choices=['stdio', 'streamable-http'], default='stdio')
@@ -135,8 +137,8 @@ def main(argv=None):
     try:
         if args.command in {'setup', 'doctor'}:
             from .installation import setup, doctor
-            result = (setup(args.project, args.client, dry_run=args.dry_run, output=args.output, server_name=args.server_name)
-                      if args.command == 'setup' else doctor(args.project, args.client, handshake=args.handshake, server_name=args.server_name))
+            result = (setup(args.project, args.client, dry_run=args.dry_run, output=args.output, server_name=args.server_name, wsl_distro=args.wsl_distro)
+                      if args.command == 'setup' else doctor(args.project, args.client, handshake=args.handshake, server_name=args.server_name, wsl_distro=args.wsl_distro))
             _handle_feedback_output(result)
             return 0
         if args.command == 'mcp':

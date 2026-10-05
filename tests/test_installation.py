@@ -113,3 +113,45 @@ def test_named_server_migration_preserves_existing_permissions(tmp_path):
     assert 'mcp_servers.visual-bridge' not in path.read_text()
     assert setup(tmp_path, 'codex', server_name='agent_visual_bridge')['state'] == 'unchanged'
     assert doctor(tmp_path, 'codex', server_name='agent_visual_bridge')['configuration_matches']
+
+
+def test_windows_client_to_wsl_export(tmp_path):
+    if sys.platform != 'linux':
+        pytest.skip('WSL profiles are generated inside Linux')
+    project = tmp_path / 'project with spaces'
+    project.mkdir()
+    for client in ['opencode', 'antigravity', 'codex']:
+        result = setup(project, client, wsl_distro='Ubuntu')
+        _, entry = configuration(project, client, wsl_distro='Ubuntu')
+        command = entry['command']
+        argv = command if isinstance(command, list) else [command, *entry['args']]
+        assert argv[:5] == ['wsl.exe', '--distribution', 'Ubuntu', '--cd', str(project)]
+        assert 'AVB_DB=' + str(project / '.agent-visual-bridge/reviews.sqlite3') in argv
+        assert sys.executable in argv and argv[-3:] == ['-m', 'agent_visual_bridge', 'mcp']
+        assert 'cwd' not in entry
+        from importlib.util import find_spec
+        if client != 'codex' or find_spec('tomlkit') is not None:
+            assert doctor(project, client, wsl_distro='Ubuntu')['configuration_matches']
+        assert setup(project, client, wsl_distro='Ubuntu')['state'] == 'unchanged'
+        assert result['qualification'] == 'configuration-only'
+    with pytest.raises(ValueError):
+        setup(project, 'opencode', wsl_distro='Ubuntu\nother')
+
+
+def test_diagnostic_probes_selected_launcher_without_fallback(tmp_path):
+    pytest.importorskip('mcp')
+    import asyncio
+    from agent_visual_bridge.installation import _handshake
+    # A nonexistent selected launcher must fail even with a working local Python.
+    with pytest.raises(OSError):
+        asyncio.run(_handshake(tmp_path, {'command': str(tmp_path / 'missing-launcher'), 'args': []}))
+
+
+def test_handshake_refuses_mismatched_project_config(tmp_path):
+    setup(tmp_path, 'opencode')
+    path = tmp_path / 'opencode.json'
+    config = json.loads(path.read_text())
+    config['mcp']['visual-bridge']['command'][0] = 'different-python'
+    path.write_text(json.dumps(config))
+    with pytest.raises(ValueError, match='differs from the selected launcher'):
+        doctor(tmp_path, 'opencode', handshake=True)

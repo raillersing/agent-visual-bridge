@@ -108,7 +108,7 @@ def _owned(entry):
                or Path(t).name in {'agent-bridge', 'agent-bridge.exe', 'avb', 'avb.exe'}) for t in tokens)
 
 
-def configuration(project, client):
+def configuration(project, client, *, wsl_distro=None):
     root = Path(project).resolve()
     if not root.is_dir():
         raise ValueError('Project directory does not exist')
@@ -117,18 +117,29 @@ def configuration(project, client):
     project_id = re.sub(r'[^a-zA-Z0-9_.:-]', '-', root.name)[:120] or 'project'
     env = {'AVB_DB': str(root / '.agent-visual-bridge/reviews.sqlite3'), 'AVB_PROJECT_ID': project_id}
     args = ['-m', 'agent_visual_bridge', 'mcp']
-    entry = {'command': sys.executable, 'args': args, 'env': env}
+    command = sys.executable
+    if wsl_distro is not None:
+        if (sys.platform != 'linux' or not isinstance(wsl_distro, str)
+                or not wsl_distro.strip() or len(wsl_distro) > 200
+                or any(c in wsl_distro for c in '\0\r\n')):
+            raise ValueError('WSL export requires Linux and an explicit valid distribution name')
+        command = 'wsl.exe'
+        args = ['--distribution', wsl_distro, '--cd', str(root), '--exec',
+                '/usr/bin/env', *[f'{k}={v}' for k, v in env.items()], sys.executable, *args]
+    entry = {'command': command, 'args': args, 'env': env}
     if client == 'opencode':
-        entry = {'type': 'local', 'command': [sys.executable, *args], 'environment': env}
+        entry = {'type': 'local', 'command': [command, *args], 'environment': env}
     elif client == 'codex':
-        entry = {**entry, 'cwd': str(root), 'startup_timeout_sec': 30, 'tool_timeout_sec': 60}
+        entry = {**entry, 'startup_timeout_sec': 30, 'tool_timeout_sec': 60}
+        if wsl_distro is None:
+            entry['cwd'] = str(root)
     return root, entry
 
 
-def setup(project, client, *, dry_run=False, output=None, server_name='visual-bridge'):
+def setup(project, client, *, dry_run=False, output=None, server_name='visual-bridge', wsl_distro=None):
     if not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', server_name):
         raise ValueError('Invalid MCP server name')
-    root, entry = configuration(project, client)
+    root, entry = configuration(project, client, wsl_distro=wsl_distro)
     filename, table = CLIENTS[client]
     if client == 'hermes':
         # JSON is valid YAML; export a fragment, never mutate the global file.
@@ -201,8 +212,8 @@ def setup(project, client, *, dry_run=False, output=None, server_name='visual-br
     return result
 
 
-def doctor(project, client, *, handshake=False, server_name='visual-bridge'):
-    root, entry = configuration(project, client)
+def doctor(project, client, *, handshake=False, server_name='visual-bridge', wsl_distro=None):
+    root, entry = configuration(project, client, wsl_distro=wsl_distro)
     filename, table = CLIENTS[client]
     from importlib.util import find_spec
     result = {'project': str(root), 'client': client, 'python': sys.executable,
@@ -210,7 +221,8 @@ def doctor(project, client, *, handshake=False, server_name='visual-bridge'):
               'database_exists': (root / '.agent-visual-bridge/reviews.sqlite3').exists(),
               'configuration_exists': bool(filename and (root / filename).exists()),
               'qualification': 'not-runtime-qualified', 'transport': 'stdio',
-              'inference': 'not-tested', 'host_capabilities': 'unknown'}
+              'inference': 'not-tested', 'host_capabilities': 'unknown',
+              'execution_host': 'wsl' if wsl_distro else 'native', 'wsl_distribution': wsl_distro}
     binaries = {'claude-code': 'claude', 'gemini-cli': 'gemini', 'vscode': 'code'}
     result['client_executable'] = shutil.which(binaries.get(client, client))
     result['url_scope'] = 'server-loopback; configure port forwarding explicitly for remote use'
@@ -226,6 +238,8 @@ def doctor(project, client, *, handshake=False, server_name='visual-bridge'):
             configured = _JSONC(source).document().value.get(table, {}).get(server_name)
         result['configuration_matches'] = isinstance(configured, dict) and all(configured.get(k) == v for k, v in entry.items())
     if handshake:
+        if result.get('configuration_matches') is False:
+            raise ValueError('Configuration differs from the selected launcher; inspect it before handshake')
         if not result['mcp_installed']:
             raise ValueError('Handshake requires agent-visual-bridge[mcp]')
         import asyncio
@@ -240,12 +254,16 @@ async def _handshake(root, entry):
     # Probe this package without creating a business review or invoking a model.
     async def probe():
         environment = {**os.environ, **entry.get('env', entry.get('environment', {}))}
-        async with stdio_client(StdioServerParameters(command=sys.executable,
-                args=['-m', 'agent_visual_bridge', 'mcp'], env=environment, cwd=str(root))) as streams:
+        command = entry['command']
+        args = entry.get('args', [])
+        if isinstance(command, list):
+            command, args = command[0], command[1:]
+        async with stdio_client(StdioServerParameters(command=command,
+                args=args, env=environment, cwd=str(root))) as streams:
             async with ClientSession(*streams) as session:
                 initialized = await session.initialize()
                 tools = await session.list_tools()
                 return {'state': 'sdk-protocol-verified', 'protocol': initialized.protocolVersion,
                         'server': initialized.serverInfo.model_dump(), 'tools': [t.name for t in tools.tools],
                         'commercial_client': 'not-tested'}
-    return await asyncio.wait_for(probe(), timeout=15)
+    return await asyncio.wait_for(probe(), timeout=30)

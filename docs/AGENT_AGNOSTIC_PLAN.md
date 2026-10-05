@@ -2,6 +2,10 @@
 
 Date initiale : 3 octobre 2026. Mise à jour : 5 octobre 2026. **Statut : plan et avancement de l’implémentation locale; qualification externe partielle.**
 
+### Mise à jour — 0.3.0.dev3, 6 octobre 2026
+
+Hermes/Codex est qualifié dans un parcours technique complet avec décisions simulées explicitement marquées. OpenCode Windows se connecte réellement au serveur MCP; l’inférence Zen de la CLI reste refusée. Antigravity a un profil Windows/WSL vérifié par SDK, sans qualification de son interface. L’export `--wsl-distro` et le diagnostic de la commande choisie sont ajoutés. La CI précédente est entièrement verte après relance des runners. Le pilote humain et le deuxième client restent à réaliser; [preuves actuelles](QUALIFICATION.md).
+
 ### Avancement actuel — 0.3.0.dev2, 5 octobre 2026
 
 | Lot | État vérifié |

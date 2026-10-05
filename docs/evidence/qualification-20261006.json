@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-06",
+  "bridge_version": "0.3.0.dev3",
+  "technical_scope": "Synthetic decisions; no ERP business operation; provider credentials managed by their existing clients",
+  "human_participants": 0,
+  "ci_prior_head": {
+    "commit": "c58f19535444aa2a1d0b7478592339d9500218d9",
+    "run": "https://github.com/raillersing/agent-visual-bridge/actions/runs/37363688908/attempts/2",
+    "result": "8 jobs passed",
+    "first_attempt_failure": "GitHub hosted runner acquisition failed"
+  },
+  "hermes": {
+    "client": "Hermes",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "human_participants": 0,
+    "scope": "Synthetic review; no business writes",
+    "status": "technical-workflow-qualified",
+    "stages": [
+      {
+        "stage": "create",
+        "tool_names": [
+          "mcp__bridge__visual_bridge_create_review"
+        ],
+        "api_calls": 2
+      },
+      {
+        "stage": "execute",
+        "tool_names": [
+          "mcp__bridge__visual_bridge_get_receipt"
+        ],
+        "api_calls": 2
+      },
+      {
+        "stage": "reconnect",
+        "tool_names": [
+          "mcp__bridge__visual_bridge_get_receipt",
+          "mcp__bridge__visual_bridge_get_review"
+        ],
+        "api_calls": 3
+      }
+    ],
+    "review_id": "fae5de42b9c54b5ead684ba46dffc622",
+    "receipt_id": "2f577247f97d4ef89ce8eddea92e8695",
+    "partial_decision": true,
+    "constraints_preserved": true,
+    "checkpoint_pause_applied": true,
+    "revision_invalidates_approval": true,
+    "reconnect_verified": true,
+    "elapsed_seconds": 38.54
+  },
+  "opencode": {
+    "client": "OpenCode Windows CLI 1.18.34",
+    "provider": "Zen",
+    "model": "opencode/big-pickle",
+    "mcp_native_transport": "connected",
+    "inference": "not-qualified",
+    "provider_status": 403,
+    "provider_message": "OpenCode's free tier can only be used from within OpenCode",
+    "elapsed_seconds": 22.45,
+    "visible_cli_credential_provider_names": [
+      "ollama-cloud"
+    ],
+    "paid_zen_account": "User reports Zen usage; authenticated client and offer not yet verified; Desktop is installed; no credential migration performed"
+  },
+  "antigravity": {
+    "installed": "Windows Desktop application located",
+    "project_profile": ".agents/mcp_config.json",
+    "windows_to_wsl_sdk_handshake": "passed; 14 tools; protocol 2025-11-25",
+    "native_interface": "not-qualified",
+    "provider_inference": "not-tested"
+  },
+  "tests": {
+    "full_local_suite": {
+      "passed": 105,
+      "seconds": 111.43
+    },
+    "python39_installation": {
+      "passed": 15,
+      "optional_skips": 4
+    }
+  },
+  "remaining": [
+    "Second non-Codex client inference journey",
+    "Commercial Apps UI qualification",
+    "Consenting human pilot",
+    "ACP runtime adapter, optional"
+  ],
+  "hermes_reproducible_probe": {
+    "client": "Hermes",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "human_participants": 0,
+    "scope": "Synthetic review; no business writes",
+    "status": "technical-workflow-qualified",
+    "stages": [
+      {
+        "stage": "create",
+        "tool_names": [
+          "mcp__bridge__visual_bridge_create_review"
+        ],
+        "api_calls": 2
+      },
+      {
+        "stage": "execute",
+        "tool_names": [
+          "mcp__bridge__visual_bridge_get_receipt"
+        ],
+        "api_calls": 2
+      },
+      {
+        "stage": "reconnect",
+        "tool_names": [
+          "mcp__bridge__visual_bridge_get_receipt",
+          "mcp__bridge__visual_bridge_get_review"
+        ],
+        "api_calls": 3
+      }
+    ],
+    "review_id": "a681db764017433bb9e000be18178b82",
+    "receipt_id": "8e17bf1317334eccb3d2493cdb93d9e1",
+    "partial_decision": true,
+    "constraints_preserved": true,
+    "checkpoint_pause_applied": true,
+    "revision_invalidates_approval": true,
+    "reconnect_verified": true,
+    "elapsed_seconds": 36.06
+  }
+}

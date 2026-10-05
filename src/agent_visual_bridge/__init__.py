@@ -14,7 +14,7 @@ from agent_visual_bridge.execution import ExecutionRequest, ExecutionResult
 from agent_visual_bridge.executors.process import JsonProcessExecutor
 from agent_visual_bridge.models import ValidationError, ConflictError
 
-__version__ = "0.3.0.dev2"
+__version__ = "0.3.0.dev3"
 __all__ = [
     "ReportType",
     "VisualBridge",

@@ -1,3 +1,12 @@
+# 0.3.0.dev3 — Windows/WSL interoperability and Hermes qualification
+
+- Explicit `setup/doctor --wsl-distro` profiles for native Windows clients using a Linux Python.
+- SDK diagnostics invoke the selected exported command; mismatched project configurations fail before probing.
+- Reproducible optional real-Hermes synthetic workflow probe, without credential exports or external-session attachment.
+- Hermes/Codex workflow qualified; Windows OpenCode MCP connected; Zen inference and Antigravity commercial UI remain unqualified.
+
+A second non-Codex client, commercial Apps and a consenting human pilot remain release qualification gates. This is a development version, not a published stable package.
+
 # 0.3.0.dev2 — implementation prepared; external runtime gate PARTIAL
 
 - Named MCP migration preserves server names, targeted approvals and foreign settings.

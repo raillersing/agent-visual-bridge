@@ -23,7 +23,7 @@ def handle_rpc_call(msg):
     method = msg.get('method')
     if method == 'initialize':
         response['result'] = {'protocolVersion': '2024-11-05', 'capabilities': {'tools': {}},
-                              'serverInfo': {'name': 'agent-visual-bridge', 'version': '0.3.0.dev2'}}
+                              'serverInfo': {'name': 'agent-visual-bridge', 'version': '0.3.0.dev3'}}
     elif method == 'tools/list':
         response['result'] = {'tools': TOOLS}
     elif method == 'ping':

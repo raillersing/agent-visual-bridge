@@ -1,5 +1,26 @@
 # Qualification
 
+## 0.3.0.dev3 — 2026-10-06, Windows/WSL and real Hermes workflow
+
+- Previous PR head `c58f195`: all eight CI jobs passed on [attempt 2](https://github.com/raillersing/agent-visual-bridge/actions/runs/37363688908/attempts/2). The first attempt failed to acquire hosted runners, rather than failing executed tests.
+- New Windows-to-WSL launch profiles, real selected-launcher diagnostics and mismatch rejection: **105 local tests passed**, 111.43 seconds. Python 3.9 installation subset: **15 passed, 4 optional skips**.
+- Actual Windows OpenCode CLI reports its bridge MCP server **connected**. Zen free inference returned HTTP 403; the user’s reported Zen access is not inferred from this result; Desktop is installed, but the authenticated client remains to be confirmed. CLI-visible credentials list Ollama Cloud only.
+- Actual Hermes 0.18.2 with its own Codex authentication and selected `gpt-6.1-sol`: **technical workflow qualified**. Agent calls created the proposal, retrieved the exact immutable receipt, and reread review/receipt after reconnection. Synthetic partial submission, exact constraints/comment at the cooperative execution boundary, pause applied at checkpoint, changed-scope invalidation and durable receipt equality were verified. No business write or human participant observation is claimed.
+- Antigravity Desktop was located. Its Windows-to-WSL project profile passed the real SDK handshake (14 tools); its own interface and inference remain unqualified.
+
+[Sanitized observed evidence](evidence/qualification-20261006.json) separates client, provider, protocol and UI. Hermes is a non-Codex **client** here, using the Codex **provider**; this result does not qualify Ollama or establish a second non-Codex client. The milestone remains PARTIAL.
+
+Reproduce the optional Hermes workflow using the installed Hermes Python, explicit source directory, bridge Python and your already authenticated provider/model:
+
+```bash
+/path/to/hermes/venv/bin/python scripts/qualify_hermes_workflow.py \
+  --hermes-source /path/to/hermes/source \
+  --bridge-python /path/to/bridge/venv/bin/python \
+  --provider openai-codex --model YOUR_AUTHENTICATED_MODEL
+```
+
+The probe creates a new private temporary database, uses synthetic decisions, limits each turn to four iterations and writes private local raw results. Its public evidence contains tool names/states and synthetic identifiers, never credentials. An explicit output directory must be new. It does not attach or resume the user’s external sessions.
+
 ## 0.3.0.dev2 — 2026-10-05, implementation qualified; external gate PARTIAL
 
 | Layer | Observed result |

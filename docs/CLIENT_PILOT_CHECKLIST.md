@@ -1,6 +1,6 @@
 # Remaining external qualification
 
-Status: prepared. No commercial MCP Apps qualification or participant observation is claimed.
+Status: Hermes/Codex technical workflow qualified on 2026-10-06; second client pending. No commercial MCP Apps qualification or participant observation is claimed.
 
 ## Hermes and OpenCode
 
@@ -25,3 +25,7 @@ The reference AppBridge browser host and SDK tests are technical qualification. 
 ## Human pilot
 
 Use [PILOT.md](PILOT.md) with consenting participants and pseudonymous IDs. Record only actual observations. Keep synthetic technical records out of pilot observations. Compare submitted constraints, stored receipts and executor input; capture comprehension of pending/deferred actions and between-action controls. Export metrics voluntarily; do not publish private task text or credentials.
+
+## Current client selection (6 October 2026)
+
+The user uses Hermes with Ollama or Codex, OpenCode Zen and Antigravity. Hermes/Codex passed the synthetic technical workflow. OpenCode Zen free inference from the installed CLI returned HTTP 403; its native MCP transport is connected. Verify the user’s authenticated Zen client/offer separately, without copying provider keys into project configuration. Native Windows clients use the explicit `--wsl-distro` launcher when Python lives in WSL. Antigravity UI and all participant observations remain pending. See [current evidence](evidence/qualification-20261006.json).
