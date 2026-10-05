@@ -30,7 +30,7 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: ui/package-lock.json
-      - run: python -m pip install -e '.[dev,qualification]'
+      - run: python -m pip install -e '.[dev,qualification,setup]'
       - run: npm ci && npm run build && npm run build:host
         working-directory: ui
       - run: python -m playwright install --with-deps chromium
@@ -41,3 +41,12 @@ jobs:
           python -m venv /tmp/avb-wheel
           /tmp/avb-wheel/bin/pip install --no-deps dist/*.whl
           /tmp/avb-wheel/bin/python scripts/package_smoke.py
+  portability:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e '.[dev,setup]'
+      - run: pytest -q tests/test_installation.py tests/test_browser_sessions.py tests/test_cli.py tests/test_executor.py

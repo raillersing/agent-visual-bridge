@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-03",
+  "bridge_version": "0.3.0.dev1",
+  "scope": "Isolated scratch project; no global trust/auto-approval/provider configuration changed",
+  "human_pilot": false,
+  "clients": [
+    {
+      "client": "claude",
+      "returncode": 1,
+      "elapsed_seconds": 3.4,
+      "review_id": "1afddc1b573646c0add21947bb95cd77",
+      "status": "not-qualified",
+      "observed_errors": [
+        "Not logged in"
+      ],
+      "version": "2.1.261",
+      "model_inference_qualified": false,
+      "reason": "Not logged in"
+    },
+    {
+      "client": "gemini",
+      "returncode": 1,
+      "elapsed_seconds": 10.68,
+      "review_id": "1afddc1b573646c0add21947bb95cd77",
+      "status": "not-qualified",
+      "version": "0.46.0",
+      "model_inference_qualified": false,
+      "reason": "IneligibleTierError: authentication through the configured Code Assist path was refused"
+    },
+    {
+      "client": "hermes",
+      "returncode": 0,
+      "elapsed_seconds": 3.58,
+      "review_id": "1afddc1b573646c0add21947bb95cd77",
+      "status": "tool-discovery-verified",
+      "version": "0.18.2",
+      "model_inference_qualified": false,
+      "tools_discovered": 13,
+      "scope": "Real Hermes CLI mcp test; discovery only, no review submission or LLM inference"
+    }
+  ]
+}

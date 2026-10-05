@@ -1,4 +1,14 @@
-# Migration to 0.2
+# Migration
+
+## 0.3.0.dev1: MCP interaction change
+
+The official MCP `visual_bridge_ask_human` returns immediately by default. Pass `wait: true` to preserve the blocking receipt workflow; `open_browser: true` explicitly opens the server's browser. A wait timeout no longer expires the review. Poll `visual_bridge_get_review`, then fetch its receipt; `visual_bridge_open_review` renews browser access. The legacy compatibility dispatcher and synchronous Python/CLI waiting APIs keep their existing behavior.
+
+Detached browser sessions survive MCP shutdown. Stop them for a specific database with `agent-bridge --db PATH browser-stop`. Schema version remains 1; no SQLite migration is performed. Setup does not move existing review databases. The new project installer uses `.agent-visual-bridge/reviews.sqlite3` unless you manually adapt its exported configuration to your existing path.
+
+Existing `CodexTextExecutor` imports from the package and `adapters` remain valid; the implementation now lives in `executors/codex.py`. See [the common integration guide](AGENT_INTEGRATION.md) for client configuration and diagnostic limits.
+
+## Migration to 0.2
 
 ## Compatibility
 

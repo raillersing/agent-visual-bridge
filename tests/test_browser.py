@@ -20,6 +20,24 @@ def browser():
         browser.close()
 
 
+def test_english_browser_review_preserves_submitted_constraints(browser, tmp_path):
+    service = ReviewService(tmp_path / 'english.db')
+    service.settings('english-project', {'preferences': {'language': 'en'}})
+    review = service.create_review({'project_id': 'english-project', 'items': [{'id': 'a', 'title': 'API scope'}]})
+    with LocalServer(service, review['review_id']) as server:
+        page = browser.new_page()
+        page.goto(server.url)
+        expect(page.locator('#summary')).to_contain_text('pending item(s)')
+        page.locator('#status-a').select_option('approve')
+        page.locator('#constraints-a').fill('Preserve the public API')
+        page.locator('#submit').click()
+        expect(page.locator('#mandate-text')).to_contain_text('Pending items remain unauthorized')
+        page.locator('#confirm').click()
+        expect(page.locator('#notice')).to_contain_text('Decisions saved. Receipt')
+        stored = ReviewService(service.store.path).get_review(review['review_id'])
+        assert stored['decisions']['a']['constraints'] == ['Preserve the public API']
+
+
 def test_browser_partial_decision_reload_question_revision_and_control(browser, tmp_path):
     service = ReviewService(tmp_path/'reviews.db')
     review = service.create_review({'title':'Human review', 'report_type':'plan', 'items':[

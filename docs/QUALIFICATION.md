@@ -1,6 +1,38 @@
-# Qualification — 0.2.0
+# Qualification
 
-Date: 2026-10-02. Implementation delivered locally. External product qualification remains partial. No commit, push, release publication or remote CI run is claimed.
+## 0.3.0.dev1 — 2026-10-03, local implementation, external qualification PARTIAL
+
+Delivered locally: detached browser supervisor, nonblocking MCP workflow, form-mode capability checks, explicit fallback, nine client configuration exporters, JSONC preservation, optional TOML editing, CLI diagnostics and neutral instructions. The Codex executor is isolated with compatible imports. HTTP transport and a second execution engine are not delivered.
+
+Final local evidence:
+
+| Layer | Result |
+|---|---|
+| Complete Python 3.12 suite with browser/MCP extras | **87 passed**, no skips, 61.02 seconds |
+| Python 3.9.25 / 3.14.4 core, explicit browser/MCP/schema exclusions | **59 passed, 2 skips** each: optional TOML and SDK handshake |
+| Static checks | Ruff, `git diff --check`, JavaScript syntax and local documentation links passed |
+| Installed wheel, Python 3.9, no optional dependencies | HTML, persistence, receipt, packaged assets/schemas, Gemini configuration and detached browser passed |
+| Official SDK stdio | URL-only clients never receive forms; refused elicitation falls back without a decision; disconnect and wait timeout preserve awaiting reviews; explicit browser fallback from an Apps-capable host |
+| Detached process + HTTP | Originating process exits; browser still accessible; submission and SQLite receipt reread; concurrent cold starts reuse one supervisor; failed startup child is terminated; access expiry preserves pending review |
+| Installer | Nine formats/fragments; dry-run, idempotence, unrelated comments/configuration preservation, backups, conflict refusal and relocation |
+| Windows | Portability job added to CI; no Windows runtime result claimed |
+
+### Real clients in an isolated scratch project
+
+| Client | Observed outcome | Qualification |
+|---|---|---|
+| Claude Code 2.1.261 | Read-only MCP probe returned `Not logged in` | Authentication unavailable; no completed runtime journey |
+| Gemini CLI 0.46.0 | `IneligibleTierError` on the configured Code Assist authentication path | Authentication refused for this setup; no completed runtime journey |
+| Hermes 0.18.2 | Real `hermes mcp test visual-bridge` connected and discovered the tools | Configuration and discovery verified; no LLM inference or submitted review qualified |
+| Cursor, VS Code, OpenCode, Cline, Antigravity | Exporters available, no running client exercised | Configuration-only; native capabilities unknown |
+
+[Sanitized observed client evidence](evidence/agnostic-clients.json) records versions, results and timings. Raw local logs are excluded; no credentials are copied into evidence. No simulated result is presented as successful model execution or a human study. Provider settings and global trust were preserved.
+
+The v0.3 milestone remains PARTIAL until two non-Codex clients complete the real journey. Commercial Apps, human pilot and ERP migration remain pending. The results above describe the local qualification snapshot of 2026-10-03; subsequent commits, pull requests and CI results are tracked in GitHub. No package publication is claimed.
+
+## 0.2.0 — historical evidence
+
+The local qualification below was recorded on 2026-10-02. Version 0.2 was subsequently merged through [PR #1](https://github.com/raillersing/agent-visual-bridge/pull/1); its [post-merge CI](https://github.com/raillersing/agent-visual-bridge/actions/runs/37101221287) passed on 2026-10-03. These delivery results do not qualify the new 0.3 changes.
 
 ## Verified environment and results
 
@@ -20,7 +52,7 @@ The complete suite covers invalid inputs, ignored agent approvals, independent c
 
 The keyboard journey runs at **320 px** with **150% root text size**, checks absence of horizontal page overflow, submits via keyboard, verifies the stored receipt and checks that submitted fields become disabled. This does not constitute full screen-reader, Safari, Firefox, mobile-device or WCAG certification.
 
-CI has been updated to run the core on Python 3.9–3.14, browser/MCP qualification on 3.12 and minimal installed-wheel smoke verification. Only the local runs above have been observed; intermediate Python versions and remote CI await actual workflow execution.
+The v0.2 CI ran the core on Python 3.9–3.14, browser/MCP qualification on 3.12 and minimal installed-wheel smoke verification. The remote run is linked above; the measurements in this historical table are the original local runs.
 
 ## Real agent qualification
 
@@ -65,6 +97,6 @@ The reference-host browser test forwards App actions through the local service; 
 
 - Run the three-task comparative pilot with consenting participants using [PILOT.md](PILOT.md). Collect scope understanding and effort rather than inferring them from approvals. No study records have been fabricated.
 - Exercise at least one commercial MCP Apps host and its sandbox/CSP/theme behavior, then record the host version and outcomes.
-- English static controls are translated; dynamic status/error messages still require complete localization.
-- Observe the updated remote CI matrix before claiming remote qualification.
+- In v0.3, browser lifecycle messages were translated; agent-authored content and canonical receipt text preserve their original language. Native hosts still need qualification.
+- Observe remote CI for the new v0.3 code, including the Windows portability job, before claiming remote qualification.
 - Publish only after a separate release decision. Existing actions cannot be undone by the bridge; pause/stop apply at cooperative checkpoints.

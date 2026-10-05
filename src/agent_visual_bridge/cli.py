@@ -47,6 +47,23 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog='agent-bridge')
     parser.add_argument('--db', help='SQLite review database (or AVB_DB)')
     commands = parser.add_subparsers(dest='command')
+    from .installation import CLIENTS
+    setup = commands.add_parser('setup', help='Export or install project-scoped MCP configuration')
+    setup.add_argument('--project', required=True)
+    setup.add_argument('--client', choices=CLIENTS, required=True)
+    setup.add_argument('--dry-run', action='store_true')
+    setup.add_argument('--output', help='Export to a specific file instead of the client configuration')
+    doctor = commands.add_parser('doctor', help='Inspect configuration; never infer provider availability')
+    doctor.add_argument('--project', required=True)
+    doctor.add_argument('--client', choices=CLIENTS, required=True)
+    doctor.add_argument('--handshake', action='store_true', help='Probe the server with the official SDK, not the commercial client')
+    mcp = commands.add_parser('mcp', help='Run the optional official MCP server')
+    mcp.add_argument('--transport', choices=['stdio'], default='stdio')
+    opened = commands.add_parser('open', help='Open a detached browser session and return JSON promptly')
+    opened.add_argument('review_id')
+    opened.add_argument('--lease-seconds', type=float, default=3600)
+    opened.add_argument('--open-browser', action='store_true')
+    commands.add_parser('browser-stop', help='Close detached browser access for this database, preserving reviews')
     auto = commands.add_parser('auto', help='Generate report and optionally wait for decisions')
     auto.add_argument('input')
     auto.add_argument('-o', '--output')
@@ -111,6 +128,27 @@ def main(argv=None):
         parser.print_help()
         return 0
     try:
+        if args.command in {'setup', 'doctor'}:
+            from .installation import setup, doctor
+            result = (setup(args.project, args.client, dry_run=args.dry_run, output=args.output)
+                      if args.command == 'setup' else doctor(args.project, args.client, handshake=args.handshake))
+            _handle_feedback_output(result)
+            return 0
+        if args.command == 'mcp':
+            from .mcp.server import run_mcp_server
+            run_mcp_server(args.db)
+            return 0
+        if args.command in {'open', 'browser-stop'}:
+            from .browser import open_browser_session, stop_browser_sessions
+            database = ReviewService(args.db).store.path
+            if args.command == 'browser-stop':
+                result = stop_browser_sessions(database)
+            else:
+                result = open_browser_session(database, args.review_id, lease_seconds=args.lease_seconds)
+                if args.open_browser:
+                    webbrowser.open(result['url'])
+            _handle_feedback_output(result)
+            return 0
         if args.command == 'init':
             out = Path(args.output or f'sample_{args.type}.json')
             out.parent.mkdir(parents=True, exist_ok=True)
@@ -198,7 +236,7 @@ def main(argv=None):
     except TimeoutError as exc:
         print(str(exc), file=sys.stderr)
         return 2
-    except (ValueError, OSError, KeyError, TypeError) as exc:
+    except (ValueError, OSError, KeyError, TypeError, RuntimeError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 

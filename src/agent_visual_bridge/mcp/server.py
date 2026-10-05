@@ -23,7 +23,7 @@ def handle_rpc_call(msg):
     method = msg.get('method')
     if method == 'initialize':
         response['result'] = {'protocolVersion': '2024-11-05', 'capabilities': {'tools': {}},
-                              'serverInfo': {'name': 'agent-visual-bridge', 'version': '0.2.0'}}
+                              'serverInfo': {'name': 'agent-visual-bridge', 'version': '0.3.0.dev1'}}
     elif method == 'tools/list':
         response['result'] = {'tools': TOOLS}
     elif method == 'ping':
@@ -48,12 +48,12 @@ def handle_rpc_call(msg):
     return response
 
 
-def run_mcp_server():
+def run_mcp_server(database=None):
     try:
         from .sdk import create_server
     except ImportError as exc:
         raise SystemExit('MCP needs Python >=3.10 and pip install "agent-visual-bridge[mcp]"') from exc
-    create_server().run(transport='stdio')
+    create_server(database).run(transport='stdio')
 
 
 if __name__ == '__main__':
