@@ -10,6 +10,8 @@ from agent_visual_bridge.parser import parse_html_file, parse_html_report
 from agent_visual_bridge.watcher import serve_and_wait, watch_html_file
 from agent_visual_bridge.sessions import ReviewService
 from agent_visual_bridge.adapters import CooperativeAgent, CodexTextExecutor
+from agent_visual_bridge.execution import ExecutionRequest, ExecutionResult
+from agent_visual_bridge.executors.process import JsonProcessExecutor
 from agent_visual_bridge.models import ValidationError, ConflictError
 
 __version__ = "0.3.0.dev2"
@@ -23,6 +25,9 @@ __all__ = [
     "ReviewService",
     "CooperativeAgent",
     "CodexTextExecutor",
+    "JsonProcessExecutor",
+    "ExecutionRequest",
+    "ExecutionResult",
     "ValidationError",
     "ConflictError",
     "watch_html_file",
