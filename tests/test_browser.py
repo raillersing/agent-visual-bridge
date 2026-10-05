@@ -68,7 +68,11 @@ def test_browser_partial_decision_reload_question_revision_and_control(browser, 
         expect(page.locator('#notice')).to_contain_text('Question enregistrée')
         service.publish_item_reply(review['review_id'],'b','Transactional integrity',category='fact')
         expect(page.locator('article[data-id="b"] .thread')).to_contain_text('Transactional integrity')
-        page.locator('[data-control="pause"]').click()
+        with page.expect_response(lambda response: response.url.endswith('/api/control')
+                                  and response.request.method == 'POST') as control_response:
+            page.locator('[data-control="pause"]').click()
+        assert control_response.value.status == 200
+        assert control_response.value.json()['state'] == 'requested'
         assert agent.run_next()['state']=='paused'
         expect(page.locator('#control-status')).to_contain_text('applied')
         page.locator('article[data-id="a"] summary').filter(has_text='Ajuster').click()
