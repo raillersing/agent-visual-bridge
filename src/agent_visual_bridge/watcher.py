@@ -66,4 +66,4 @@ def serve_and_wait(html_path, port=0, open_browser=True, timeout=600.0, service=
 
 def read_decision_file(path):
     path = Path(path)
-    return json.loads(path.read_text()) if path.suffix == '.json' else parse_html_file(path)
+    return json.loads(path.read_text(encoding='utf-8')) if path.suffix == '.json' else parse_html_file(path)

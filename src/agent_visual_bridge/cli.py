@@ -152,7 +152,7 @@ def main(argv=None):
         if args.command == 'init':
             out = Path(args.output or f'sample_{args.type}.json')
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps(starter(args.type), indent=2, ensure_ascii=False))
+            out.write_text(json.dumps(starter(args.type), indent=2, ensure_ascii=False), encoding='utf-8')
             return 0
         if args.command == 'auto':
             bridge = VisualBridge.from_json_file(args.input, report_type=args.type)
@@ -184,7 +184,7 @@ def main(argv=None):
         service = ReviewService(args.db)
         command = args.command
         if command == 'create':
-            result = service.create_review(json.loads(Path(args.input).read_text()))
+            result = service.create_review(json.loads(Path(args.input).read_text(encoding='utf-8')))
             if args.output:
                 output = Path(args.output)
                 output.parent.mkdir(parents=True, exist_ok=True)
@@ -206,7 +206,7 @@ def main(argv=None):
             result = pilot_report(service, args.review_id)
         elif command == 'pilot-record':
             from .evaluation import record_observation
-            result = record_observation(service, args.review_id, json.loads(Path(args.input).read_text()))
+            result = record_observation(service, args.review_id, json.loads(Path(args.input).read_text(encoding='utf-8')))
         elif command == 'submit':
             data = read_decision_file(args.input)
             if data.get('review_id') != args.review_id or not data.get('submitted_at'):
@@ -214,13 +214,13 @@ def main(argv=None):
             result = service.submit_decisions(args.review_id, data.get('revision'), data.get('decisions'),
                                               data.get('request_key', ''), provenance='imported-artifact-unverified')
         elif command == 'revise':
-            result = service.revise_review(args.review_id, json.loads(Path(args.input).read_text()), args.revision)
+            result = service.revise_review(args.review_id, json.loads(Path(args.input).read_text(encoding='utf-8')), args.revision)
         elif command == 'question':
             result = service.ask_item_question(args.review_id, args.item_id, args.message)
         elif command == 'control':
             result = service.request_control(args.review_id, args.action, json.loads(args.payload))
         elif command == 'settings':
-            result = service.settings(args.project_id, json.loads(Path(args.input).read_text()) if args.input else None)
+            result = service.settings(args.project_id, json.loads(Path(args.input).read_text(encoding='utf-8')) if args.input else None)
         elif command == 'resume':
             with LocalServer(service, args.review_id, args.port) as server:
                 print(json.dumps({'url': server.url, 'review_id': args.review_id}), flush=True)
