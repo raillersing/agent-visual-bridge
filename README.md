@@ -4,6 +4,16 @@ A local interface for reviewing agent proposals, asking questions and returning 
 
 The Python core uses only the standard library (Python 3.9+). Reports embed their CSS and JavaScript and work offline. SQLite stores reviews locally. Optional agent integrations can send the authorized task to their configured provider; the bridge does not store provider credentials.
 
+## Guided qualification
+
+Use the bridge itself to collect client choices, test observations and evidence:
+
+```bash
+python3 scripts/start_qualification_guide.py --open-browser
+```
+
+The French guide asks one clarification at a time and preserves submitted responses across restarts. Technical client scenarios remain in [the step-by-step guide](docs/GUIDE_QUALIFICATION_FR.md); client tests and execution use separate reviews. Reviews containing execution authorizations retain the full decision interface.
+
 ## Install
 
 ```bash

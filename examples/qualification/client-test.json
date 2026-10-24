@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "project_id": "bridge-qualification-sandbox",
+  "title": "Essai de qualification — décision partielle",
+  "report_type": "plan",
+  "items": [
+    {
+      "id": "readme",
+      "title": "Lire le README du projet de test",
+      "interaction_kind": "authorize",
+      "description": "Lire uniquement README.md et restituer son titre.",
+      "question": "Autorisez-vous cette lecture seule ?",
+      "action": {
+        "operation": "read",
+        "scope": "README.md",
+        "reversible": true,
+        "external": false
+      },
+      "constraints": [
+        "Lecture seule",
+        "Aucune migration"
+      ]
+    },
+    {
+      "id": "environment",
+      "title": "Environnement du test",
+      "interaction_kind": "clarify",
+      "question": "Quel client, fournisseur et modèle utilisez-vous ?",
+      "options": [
+        "OpenCode Zen",
+        "Antigravity",
+        "Hermes"
+      ]
+    },
+    {
+      "id": "followup",
+      "title": "Suite du test à laisser en attente",
+      "interaction_kind": "authorize",
+      "description": "Cette action dépend de readme et ne doit pas être exécutée pendant le premier essai.",
+      "dependencies": [
+        "readme"
+      ],
+      "action": {
+        "operation": "read",
+        "scope": "README.md, deuxième lecture",
+        "reversible": true,
+        "external": false
+      }
+    }
+  ]
+}

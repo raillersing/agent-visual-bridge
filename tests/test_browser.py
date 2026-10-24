@@ -38,6 +38,73 @@ def test_english_browser_review_preserves_submitted_constraints(browser, tmp_pat
         assert stored['decisions']['a']['constraints'] == ['Preserve the public API']
 
 
+def test_guided_clarification_partial_reply_reload_skip_and_stale_revision(browser, tmp_path):
+    service = ReviewService(tmp_path / 'guided.db')
+    proposal = {'metadata': {'presentation': 'guided'}, 'interaction_kind': 'clarify', 'items': [
+        {'id': 'a', 'title': 'Client', 'question': 'Quel client ?', 'options': ['WSL', 'Windows']},
+        {'id': 'b', 'title': 'Accès', 'question': 'Votre accès fonctionne-t-il ?'},
+        {'id': 'c', 'title': 'ERP', 'question': 'Quel parcours métier ?'},
+    ]}
+    review = service.create_review(proposal)
+    with LocalServer(service, review['review_id']) as server:
+        page = browser.new_page(viewport={'width': 390, 'height': 844})
+        errors = []
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.goto(server.url)
+        expect(page.locator('#guided-question')).to_have_text('Quel client ?')
+        assert page.locator('.status-select').count() == 0
+        page.get_by_role('button', name='WSL', exact=True).click()
+        answer = 'Essai synthétique </script><script>window.evil=true</script>'
+        page.locator('#guided-answer').fill(answer)
+        page.locator('#guided-send').click()
+        expect(page.locator('#guided-question')).to_have_text('Votre accès fonctionne-t-il ?')
+        stored = ReviewService(service.store.path).get_review(review['review_id'])
+        assert stored['state'] == 'partially_submitted'
+        assert set(stored['decisions']) == {'a'}
+        assert stored['decisions']['a']['decision_kind'] == 'choose'
+        assert stored['decisions']['a']['options'] == ['option-1']
+        assert stored['decisions']['a']['answer'] == answer
+        receipt_id = stored['receipts'][0]
+        receipt = service.get_receipt(receipt_id)
+        page.reload()
+        expect(page.locator('#guided-question')).to_have_text('Votre accès fonctionne-t-il ?')
+        expect(page.locator('#guided-responses')).to_contain_text(answer)
+        assert page.evaluate('window.evil') is None
+        page.locator('#guided-answer').fill('Brouillon non envoyé')
+        page.locator('#guided-skip').click()
+        expect(page.locator('#guided-question')).to_have_text('Quel parcours métier ?')
+        page.locator('#guided-skip').click()
+        expect(page.locator('#guided-complete')).to_be_visible()
+        assert set(service.get_review(review['review_id'])['decisions']) == {'a'}
+        page.locator('#guided-return').click()
+        expect(page.locator('#guided-answer')).to_have_value('Brouillon non envoyé')
+        proposal['items'][1]['question'] = 'Nouvelle question sur votre accès'
+        service.revise_review(review['review_id'], proposal, 1)
+        page.locator('#guided-send').click()
+        expect(page.locator('#notice')).to_contain_text('rechargez')
+        assert set(service.get_review(review['review_id'])['decisions']) == {'a'}
+        assert service.get_receipt(receipt_id) == receipt
+        page.reload()
+        expect(page.locator('#guided-question')).to_have_text('Nouvelle question sur votre accès')
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+        page.evaluate("document.body.style.fontSize='140%'")
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+        assert not errors
+        page.close()
+
+    # A presentation hint must never conceal authorization decisions or their preview.
+    proposal['items'].append({'id': 'write', 'title': 'Modifier un fichier', 'interaction_kind': 'authorize'})
+    mixed = service.create_review(proposal)
+    with LocalServer(service, mixed['review_id']) as server:
+        page = browser.new_page()
+        page.goto(server.url)
+        assert page.locator('#guided-send').count() == 0
+        expect(page.locator('#status-write')).to_be_visible()
+        assert page.locator('#status-write option[value="approve"]').count() == 1
+        expect(page.locator('#preview')).to_be_visible()
+        page.close()
+
+
 def test_browser_partial_decision_reload_question_revision_and_control(browser, tmp_path):
     service = ReviewService(tmp_path/'reviews.db')
     review = service.create_review({'title':'Human review', 'report_type':'plan', 'items':[

@@ -20,6 +20,10 @@ def escape(value):
 
 
 def render_review(review, runtime=None, settings=None):
+    metadata = review.get('metadata')
+    if (isinstance(metadata, dict) and metadata.get('presentation') == 'guided'
+            and all(item['interaction_kind'] == 'clarify' for item in review['items'])):
+        return render_guided_review(review, runtime)
     cards = []
     decisions = review.get('decisions', {})
     for item in review['items']:
@@ -119,6 +123,37 @@ def render_review(review, runtime=None, settings=None):
 <script id="avb-feedback" type="application/json">null</script>
 <script id="avb-runtime">const AVB_RUNTIME = {safe_json(runtime or {})};</script>
 <script>const REPORT_TYPE = {safe_json(review['report_type'])};\n{js}</script></body></html>'''
+
+
+def render_guided_review(review, runtime=None):
+    """One clarification at a time; authorization reviews retain the full view."""
+    css = (ASSETS / 'style.css').read_text(encoding='utf-8')
+    js = (ASSETS / 'guided.js').read_text(encoding='utf-8')
+    return f'''<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{escape(review['title'])} — Agent Visual Bridge</title><style>{css}
+#guided-options{{display:flex;flex-wrap:wrap;gap:.6rem}}
+#guided-options button[aria-pressed="true"]{{background:#254d87;border-color:var(--accent)}}
+#guided-actions{{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem}}
+#guided-question{{font-size:1.4rem}} #guided-progress{{color:var(--muted)}}
+</style></head><body><header><span class="badge">Agent Visual Bridge</span>
+<h1>{escape(review['title'])}</h1><p>Une question à la fois. Vos réponses précédentes sont conservées.</p>
+<p id="guided-progress" aria-live="polite"></p></header>
+<main><article id="guided-card"><h2 id="guided-question" tabindex="-1"></h2>
+<p id="guided-context"></p><div id="guided-options" role="group" aria-label="Votre choix"></div>
+<label for="guided-answer">Votre réponse ou remarque (facultatif si vous choisissez une option)</label>
+<textarea id="guided-answer"></textarea>
+<details id="guided-details"><summary>Détails si nécessaire</summary><pre id="guided-help"></pre></details>
+<div id="guided-actions"><button id="guided-send">Envoyer ma réponse</button>
+<button id="guided-skip">Passer pour l’instant</button></div></article>
+<section id="guided-complete" hidden><h2>Vos réponses sont enregistrées.</h2>
+<p id="guided-complete-text"></p><button id="guided-return">Revenir aux questions restantes</button></section>
+<details id="guided-history"><summary>Mes réponses enregistrées</summary><div id="guided-responses"></div></details>
+<p>Après votre envoi, dites à l’agent « J’ai répondu dans le guide ».</p></main>
+<p id="notice" role="status" aria-live="polite"></p>
+<script id="avb-proposal" type="application/json">{safe_json(review)}</script>
+<script id="avb-feedback" type="application/json">null</script>
+<script>const AVB_RUNTIME = {safe_json(runtime or {})};\n{js}</script></body></html>'''
 
 
 def render_html_report(title, report_type, items, subtitle='', metadata=None, server_port=None):

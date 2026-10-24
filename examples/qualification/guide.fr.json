@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "review_id": "qualification-guide-v1",
+  "project_id": "bridge-qualification-guide",
+  "title": "Préparer nos prochains essais",
+  "subtitle": "Répondez seulement aux questions utiles maintenant. Je prends en charge les vérifications techniques.",
+  "report_type": "plan",
+  "interaction_kind": "clarify",
+  "items": [
+    {
+      "id": "client",
+      "title": "1 — Où utilisez-vous OpenCode Zen ?",
+      "interaction_kind": "clarify",
+      "question": "Choisissez votre client connecté à Zen et précisez son modèle dans Réponse.",
+      "description": "Ouvrez votre client habituel. Vérifiez qu’il répond à une question simple avant le test MCP. Si aucun accès ne fonctionne, décrivez le message d’erreur.",
+      "recommendation": "Utiliser votre session existante. Aucune clé API n’est à transmettre.",
+      "consequences": "Votre choix permettra de préparer la configuration adaptée.",
+      "options": [
+        {
+          "id": "desktop-windows",
+          "label": "Application OpenCode Desktop Windows"
+        },
+        {
+          "id": "cli-windows",
+          "label": "OpenCode CLI Windows"
+        },
+        {
+          "id": "cli-wsl",
+          "label": "OpenCode CLI dans WSL"
+        },
+        {
+          "id": "other",
+          "label": "Autre — préciser dans Réponse"
+        }
+      ],
+      "checks": [
+        "Ouvrir OpenCode dans votre environnement habituel.",
+        "Demander : « Réponds simplement OK, sans appeler d’outil. »",
+        "Noter client/version, fournisseur, modèle, réponse ou erreur.",
+        "Sélectionner une option, puis Choisir une option dans Votre décision."
+      ]
+    },
+    {
+      "id": "opencode",
+      "title": "OpenCode Zen",
+      "interaction_kind": "clarify",
+      "question": "Dans votre CLI WSL, OpenCode Zen répond-il actuellement ?",
+      "description": "La connexion MCP a déjà été testée. Je dois seulement savoir si votre accès Zen fonctionne dans votre utilisation habituelle.",
+      "recommendation": "",
+      "consequences": "",
+      "options": [
+        {
+          "id": "yes",
+          "label": "Oui, il répond"
+        },
+        {
+          "id": "no",
+          "label": "Non, je rencontre une erreur"
+        },
+        {
+          "id": "later",
+          "label": "Je ne sais pas encore"
+        }
+      ],
+      "dependencies": [
+        "client"
+      ],
+      "checks": [
+        "Les scénarios et critères techniques restent disponibles dans docs/GUIDE_QUALIFICATION_FR.md.",
+        "Vous pouvez répondre partiellement ; cela ne signifie pas qu’un test est réussi."
+      ],
+      "constraints": [
+        "Ne pas inscrire de secret dans la revue.",
+        "Utiliser des données de test et conserver le travail existant."
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "docs/GUIDE_QUALIFICATION_FR.md",
+          "content": "Procédure à réaliser ; aucun résultat prérempli."
+        }
+      ]
+    },
+    {
+      "id": "antigravity",
+      "title": "Antigravity",
+      "interaction_kind": "clarify",
+      "question": "Antigravity est-il prêt pour un essai sur votre machine ?",
+      "description": "Je préparerai le scénario et les vérifications. Vous pouvez laisser ce point pour plus tard.",
+      "recommendation": "",
+      "consequences": "",
+      "options": [
+        {
+          "id": "ready",
+          "label": "Oui, je peux l’ouvrir"
+        },
+        {
+          "id": "unavailable",
+          "label": "Non, il n’est pas disponible"
+        },
+        {
+          "id": "later",
+          "label": "À tester plus tard"
+        }
+      ],
+      "dependencies": [],
+      "checks": [
+        "Les scénarios et critères techniques restent disponibles dans docs/GUIDE_QUALIFICATION_FR.md.",
+        "Vous pouvez répondre partiellement ; cela ne signifie pas qu’un test est réussi."
+      ],
+      "constraints": [
+        "Ne pas inscrire de secret dans la revue.",
+        "Utiliser des données de test et conserver le travail existant."
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "docs/GUIDE_QUALIFICATION_FR.md",
+          "content": "Procédure à réaliser ; aucun résultat prérempli."
+        }
+      ]
+    },
+    {
+      "id": "erp",
+      "title": "Votre parcours ERP",
+      "interaction_kind": "clarify",
+      "question": "Quel parcours ERP souhaitez-vous tester en premier ?",
+      "description": "Choisissez votre priorité. Je préparerai une tâche concrète et les preuves à vérifier.",
+      "recommendation": "",
+      "consequences": "",
+      "options": [
+        {
+          "id": "reservations",
+          "label": "Réservations"
+        },
+        {
+          "id": "billing",
+          "label": "Facturation"
+        },
+        {
+          "id": "access",
+          "label": "Droits d’accès"
+        },
+        {
+          "id": "other",
+          "label": "Autre — préciser ci-dessous"
+        }
+      ],
+      "dependencies": [],
+      "checks": [
+        "Les scénarios et critères techniques restent disponibles dans docs/GUIDE_QUALIFICATION_FR.md.",
+        "Vous pouvez répondre partiellement ; cela ne signifie pas qu’un test est réussi."
+      ],
+      "constraints": [
+        "Ne pas inscrire de secret dans la revue.",
+        "Utiliser des données de test et conserver le travail existant."
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "docs/GUIDE_QUALIFICATION_FR.md",
+          "content": "Procédure à réaliser ; aucun résultat prérempli."
+        }
+      ]
+    },
+    {
+      "id": "apps",
+      "title": "Où afficher les revues",
+      "interaction_kind": "clarify",
+      "question": "Pour les premiers essais, quelle interface préférez-vous ?",
+      "description": "Le navigateur actuel permet déjà de répondre. L’affichage intégré dans un client pourra être testé ensuite.",
+      "recommendation": "",
+      "consequences": "",
+      "options": [
+        {
+          "id": "browser",
+          "label": "Garder le navigateur"
+        },
+        {
+          "id": "integrated",
+          "label": "Essayer l’affichage dans mon client"
+        },
+        {
+          "id": "later",
+          "label": "Décider plus tard"
+        }
+      ],
+      "dependencies": [],
+      "checks": [
+        "Les scénarios et critères techniques restent disponibles dans docs/GUIDE_QUALIFICATION_FR.md.",
+        "Vous pouvez répondre partiellement ; cela ne signifie pas qu’un test est réussi."
+      ],
+      "constraints": [
+        "Ne pas inscrire de secret dans la revue.",
+        "Utiliser des données de test et conserver le travail existant."
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "docs/GUIDE_QUALIFICATION_FR.md",
+          "content": "Procédure à réaliser ; aucun résultat prérempli."
+        }
+      ]
+    },
+    {
+      "id": "pilot",
+      "title": "Les premiers essais",
+      "interaction_kind": "clarify",
+      "question": "Qui fera les premiers essais métier ?",
+      "description": "Cela permettra de préparer un essai adapté, sans vous demander un protocole technique à remplir.",
+      "recommendation": "",
+      "consequences": "",
+      "options": [
+        {
+          "id": "self",
+          "label": "Moi, pour commencer"
+        },
+        {
+          "id": "team",
+          "label": "Moi et mon équipe"
+        },
+        {
+          "id": "later",
+          "label": "À organiser plus tard"
+        }
+      ],
+      "dependencies": [],
+      "checks": [
+        "Les scénarios et critères techniques restent disponibles dans docs/GUIDE_QUALIFICATION_FR.md.",
+        "Vous pouvez répondre partiellement ; cela ne signifie pas qu’un test est réussi."
+      ],
+      "constraints": [
+        "Ne pas inscrire de secret dans la revue.",
+        "Utiliser des données de test et conserver le travail existant."
+      ],
+      "evidence": [
+        {
+          "kind": "document",
+          "source": "docs/GUIDE_QUALIFICATION_FR.md",
+          "content": "Procédure à réaliser ; aucun résultat prérempli."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "presentation": "guided"
+  }
+}
